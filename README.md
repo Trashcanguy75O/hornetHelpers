@@ -16,5 +16,5 @@ Hornet Helpers provides a centralized and accessible, student-centered platform 
 
 ## Tech Stack
 - Frontend: HTML, CSS, Javascript
-- Backend: Python with Flask framework and MySQL connector
-- Database: MySQL
+- Backend: Python with Flask framework and SQLite connector
+- Database: SQLite
