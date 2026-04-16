@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="popup" id="popup">A verification code has been sent to the associated email.</div>
+<div class="textbox">
+    <a href="{{ url_for('login') }}">
+        <div class="logo"></div>
+    </a>
+    <form>
+        <div class="form-container">
+            <div class="form-row">
+                <label for="user">Email:</label>
+                <input type="text" id="user" name="user">
+            </div>
+            <button type="button" onclick="showPopup()">Enter</button>
+            <p>
+                <a href="{{ url_for('username') }}">Forgot username</a>
+                |
+                <a href="{{ url_for('password') }}">Forgot password</a>
+            </p>
+        </div>
+    </form>
+</div>
+{% endblock %}
