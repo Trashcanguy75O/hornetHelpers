@@ -1,16 +1,18 @@
 from flask import Flask, render_template
-from flask import url_for
 #from acc_recovery import hello_world
 
 app = Flask(__name__)
 
-@app.route("/account_recovery")
-def recovery():
-    return render_template("acc_recovery.html")
-
+@app.route("/homepage")
+def home():
+    return render_template("homepage.html")
 @app.route("/acc_login")
 def login():
     return render_template("acc_login.html")
+
+@app.route("/new_account")
+def new_account():
+    return render_template("new_account.html")
 
 @app.route("/forgot_username")
 def username():

@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="popup" id="popup">A verification code has been sent to the associated email.</div>
+<a class="signup-btn" href="{{ url_for('new_account') }}">Sign up here!</a>
+<div class="popup" id="popup">Your information has been sent to the associated email.</div>
 <div class="textbox">
     <a href="{{ url_for('login') }}">
         <div class="logo"></div>

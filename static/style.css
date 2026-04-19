@@ -6,7 +6,7 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    text-indent: 10px;
+    /*text-indent: 10px;*/
     color: white;
 }
 
@@ -21,11 +21,14 @@ html, body {
     background-attachment: fixed;
     background-repeat: no-repeat;
     margin: 0;
-    /*filter:saturate(5%);*/
     z-index: -1;
 }
 
 .logo{
+    position: absolute;
+    top: 65px;
+    left: 50%;
+    transform: translate(-50%);
     background-image: url("images/logo.png");
     background-size: contain;
     background-repeat: no-repeat;
@@ -33,14 +36,12 @@ html, body {
     width: 120px;
     height: 120px;
     margin-bottom: 15px;
-    margin-top: 0px;
     z-index: 1;
 }
 
 .centerbox{
     min-height: 350px;
     width: 50%;
-    margin: 0;
     background-color: rgb(16, 35, 16);
     border-radius: 15px;
     opacity: 0.95;
@@ -58,65 +59,8 @@ html, body {
     flex-direction: column;
     align-items: center;
     margin: 0;
-    z-index: 1;
     gap: 10px;
-    justify-content: center;
+    padding-top: 150px;
 }
 
-.form-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 1;
-}
 
-.form-container p {
-    margin: 0;
-    position: absolute;
-    bottom: 15px;
-}
-
-.form-row {
-    position: relative;
-    width: 220px;
-    margin-bottom: 12px;
-}
-
-.form-row label {
-    position: absolute;
-    right: calc(100% + 8px);
-    top: 50%;
-    transform: translateY(-50%);
-    white-space: nowrap;
-}
-
-.form-container input {
-    width: 200px;
-    border-radius: 8px;
-}
-
-.form-container button {
-    width: 200px;
-    border-radius: 8px;
-}
-
-.form-container a {
-    margin: 0 8px;
-    color: white;
-    text-decoration: none;
-}
-
-.form-container a:hover {
-    color: hotpink;
-    text-decoration: underline;
-}
-
-.popup {
-    display: none;
-    position: absolute;
-    top: 15px;
-    color: white;
-    font-size: 14px;
-    padding: 8px;
-    text-align: center;
-}
