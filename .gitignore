@@ -1,3 +1,35 @@
-.venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Virtual environments
+.venv
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node/JavaScript (if using npm)
+node_modules/
+npm-debug.log
+
+# Database
+*.db
+*.sqlite
+
+# Environment variables
+.env
+.env.local
