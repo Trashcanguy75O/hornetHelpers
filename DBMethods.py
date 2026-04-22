@@ -26,7 +26,7 @@ class UserRepository:
             "username": r".+",
             "password": r".+",
             "full_name": r".+",
-            "email": r".+"
+            "email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|gov|edu|net)$"
         }
 
         if not re.match(patterns["username"], username):
@@ -87,6 +87,16 @@ class UserRepository:
             """, (username,))
             row = cursor.fetchone()
             return User(*row) if row else None
+            
+    def find_by_email(self, email: str) -> Optional[User]:
+    with self._connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT Id, Username, Email, Password, FullName
+            FROM Users WHERE Email = ?
+        """, (email,))
+        row = cursor.fetchone()
+        return User(*row) if row else None
 
     def change_password(self, username, new_password):
         if not re.match(r".+", new_password):
