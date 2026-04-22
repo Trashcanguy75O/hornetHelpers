@@ -21,7 +21,6 @@ class UserRepository:
 
     #(REGEX HOOKS)
     def _validate_user(self, username, password, full_name, email):
-        # For now: accept any non-empty string
         patterns = {
             "username": r".+",
             "password": r".+",
