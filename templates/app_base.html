@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hornet Helpers{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">Hornet Helpers</div>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('account') }}" class="active">My Account</a>
+                <a href="{{ url_for('login') }}">Login</a>
+            </nav>
+        </aside>
+
+        <div class="app-main">
+            <header class="topbar">
+                <div class="topbar-title">Student Dashboard</div>
+                <div class="topbar-user">Welcome, User</div>
+            </header>
+
+            <main class="content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+</body>
+</html>
