@@ -19,7 +19,6 @@ class UserRepository:
     def _connect(self):
         return sqlite3.connect(self.database_path)
 
-    #(REGEX HOOKS)
     def _validate_user(self, username, password, full_name, email):
         patterns = {
             "username": r".+",
@@ -73,7 +72,10 @@ class UserRepository:
     def list_users(self) -> List[User]:
         with self._connect() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT Id, Username, Email, Password, FullName FROM Users")
+            cursor.execute("""
+                SELECT Id, Username, Password, FullName, Email
+                FROM Users
+            """)
             rows = cursor.fetchall()
             return [User(*row) for row in rows]
 
@@ -81,21 +83,23 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT Id, Username, Email, Password, FullName
-                FROM Users WHERE Username = ?
+                SELECT Id, Username, Password, FullName, Email
+                FROM Users
+                WHERE Username = ?
             """, (username,))
             row = cursor.fetchone()
             return User(*row) if row else None
-            
+
     def find_by_email(self, email: str) -> Optional[User]:
-    with self._connect() as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT Id, Username, Email, Password, FullName
-            FROM Users WHERE Email = ?
-        """, (email,))
-        row = cursor.fetchone()
-        return User(*row) if row else None
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT Id, Username, Password, FullName, Email
+                FROM Users
+                WHERE Email = ?
+            """, (email,))
+            row = cursor.fetchone()
+            return User(*row) if row else None
 
     def change_password(self, username, new_password):
         if not re.match(r".+", new_password):
@@ -104,11 +108,32 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                UPDATE Users SET Password = ?
+                UPDATE Users
+                SET Password = ?
                 WHERE Username = ?
             """, (new_password, username))
             conn.commit()
         return True
+
+    def update_user(self, username, new_full_name, new_email):
+        if not re.match(r".+", new_full_name):
+            return False, "Invalid full name"
+
+        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|gov|edu|net)$", new_email):
+            return False, "Invalid email"
+
+        try:
+            with self._connect() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE Users
+                    SET FullName = ?, Email = ?
+                    WHERE Username = ?
+                """, (new_full_name, new_email, username))
+                conn.commit()
+            return True, "Account updated successfully."
+        except Exception as e:
+            return False, f"Error: {e}"
 
     def delete_user(self, username):
         with self._connect() as conn:
