@@ -7,24 +7,32 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
-    <div class="app-shell">
-        <aside class="sidebar">
-            <div class="sidebar-brand">Hornet Helpers</div>
+    <div class="figma-shell">
+        <aside class="figma-sidebar">
+            <div class="sidebar-logo-wrap">
+                <div class="sidebar-logo-circle">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hornet Helpers logo">
+                </div>
+            </div>
 
-            <nav class="sidebar-nav">
-                <a href="{{ url_for('home') }}">Home</a>
-                <a href="{{ url_for('account') }}" class="active">My Account</a>
-                <a href="{{ url_for('login') }}">Login</a>
+            <nav class="figma-sidebar-nav">
+                <a href="{{ url_for('account') }}">Full Name</a>
+                <a href="#">Events Calendar</a>
+                <a href="#">Personal Calendar</a>
+                <a href="#">Resume Workshop</a>
+                <a href="#">Notifications</a>
             </nav>
         </aside>
 
-        <div class="app-main">
-            <header class="topbar">
-                <div class="topbar-title">Student Dashboard</div>
-                <div class="topbar-user">Welcome, User</div>
+        <div class="figma-main">
+            <header class="figma-topbar">
+                <div class="figma-banner-title">
+                    March 20: Hornet Helper's Annual Potluck!
+                </div>
+                <a href="{{ url_for('login') }}" class="figma-signout">Sign Out</a>
             </header>
 
-            <main class="content">
+            <main class="figma-content">
                 {% block content %}{% endblock %}
             </main>
         </div>

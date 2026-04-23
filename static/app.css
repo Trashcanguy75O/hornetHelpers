@@ -2,177 +2,401 @@
     box-sizing: border-box;
 }
 
+html,
 body {
     margin: 0;
+    padding: 0;
     font-family: Arial, sans-serif;
-    background: #f3f5f7;
-    color: #1f2933;
+    background: #003b2f;
+    color: #ffffff;
 }
 
-.app-shell {
+/* ----- APP SHELL ----- */
+
+.figma-shell {
     display: flex;
     min-height: 100vh;
+    width: 100%;
+    background: #003b2f;
 }
 
-.sidebar {
-    width: 240px;
-    background: #16351f;
-    color: white;
-    padding: 24px 18px;
+.figma-sidebar {
+    width: 232px;
+    background: linear-gradient(180deg, #00451d 0%, #00391a 100%);
+    padding: 26px 16px 24px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    align-items: center;
+    gap: 28px;
+    flex-shrink: 0;
 }
 
-.sidebar-brand {
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 1.2;
+.sidebar-logo-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
+    margin-bottom: 22px;
 }
 
-.sidebar-nav {
+.sidebar-logo-circle {
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid rgba(122, 184, 99, 0.55);
+    background: #0a2817;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.figma-sidebar-nav {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 40px;
 }
 
-.sidebar-nav a {
-    color: white;
+.figma-sidebar-nav a {
+    background: #f2f2f2;
+    color: #111111;
     text-decoration: none;
-    padding: 12px 14px;
+    text-align: center;
+    min-height: 96px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.08);
-    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 12px;
+    font-size: 24px;
+    line-height: 1.2;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
-.sidebar-nav a:hover,
-.sidebar-nav a.active {
-    background: rgba(255, 255, 255, 0.18);
-}
-
-.app-main {
+.figma-main {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
-.topbar {
-    background: #ffffff;
-    border-bottom: 1px solid #d9e2ec;
-    padding: 20px 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.figma-topbar {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    width: 100%;
+    min-height: 145px;
 }
 
-.topbar-title {
-    font-size: 22px;
-    font-weight: bold;
-}
-
-.topbar-user {
-    color: #52606d;
-}
-
-.content {
-    padding: 32px;
-}
-
-.account-page {
-    max-width: 760px;
-}
-
-.account-header-card {
-    background: linear-gradient(135deg, #1f5f2f, #2f7d44);
-    color: white;
-    border-radius: 18px;
-    padding: 24px;
+.figma-banner-title {
+    background: #3d9658;
+    color: #f6f6f6;
     display: flex;
     align-items: center;
-    gap: 18px;
-    margin-bottom: 24px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    padding: 0 22px;
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1.08;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
-.avatar-circle {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.18);
+.figma-signout {
+    background: #34834b;
+    color: #ffffff;
+    text-decoration: none;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 28px;
-    font-weight: bold;
+    font-weight: 700;
 }
 
-.account-card {
-    background: white;
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+.figma-content {
+    flex: 1;
+    background: #003b2f;
+    padding: 0;
 }
 
-.account-form {
+/* ----- ACCOUNT PAGE ----- */
+
+.account-figma-page {
+    width: 100%;
+    min-height: calc(100vh - 145px);
+    background: #003b2f;
+}
+
+.profile-hero {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 34px 36px 48px;
     display: flex;
     flex-direction: column;
+    align-items: center;
+}
+
+.profile-avatar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 6px;
+    margin-bottom: 24px;
     gap: 18px;
 }
 
-.form-group {
+.profile-avatar {
+    width: 318px;
+    height: 318px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at center, #ececec 0 34%, transparent 35%),
+        linear-gradient(180deg, #f68d1f 0%, #ff8d22 42%, #415839 72%, #6f7834 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 84px;
+    font-weight: 700;
+    overflow: hidden;
+}
+
+.upload-photo-btn {
+    background: #f3f3f3;
+    color: #111111;
+    border: none;
+    border-radius: 18px;
+    padding: 16px 28px;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.profile-editor-form {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 28px;
+    align-items: center;
 }
 
-.form-group label {
-    font-weight: bold;
-    color: #334e68;
+.profile-top-fields {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 54px;
+    align-items: start;
+    margin-top: 6px;
 }
 
-.form-group input {
-    padding: 12px 14px;
-    border: 1px solid #bcccdc;
-    border-radius: 10px;
-    font-size: 15px;
+.profile-secondary-fields {
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
-.form-group input[readonly] {
-    background: #f0f4f8;
-    color: #52606d;
+.profile-secondary-fields .profile-field-box {
+    width: 520px;
 }
 
-.form-actions {
-    margin-top: 8px;
+.profile-field-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.form-actions button {
-    background: #1f5f2f;
-    color: white;
+.profile-field-box label,
+.profile-bio-box label {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.profile-field-box input {
+    width: 100%;
+    height: 72px;
     border: none;
-    border-radius: 10px;
-    padding: 12px 18px;
-    font-size: 15px;
-    cursor: pointer;
+    border-radius: 18px;
+    background: #f3f3f3;
+    color: #111111;
+    text-align: center;
+    font-size: 22px;
+    padding: 12px 16px;
+    outline: none;
 }
 
-.form-actions button:hover {
-    background: #174724;
+.profile-field-box input[readonly] {
+    background: #f3f3f3;
+    color: #111111;
+}
+
+.profile-bio-box {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-bio-box textarea {
+    width: 100%;
+    min-height: 220px;
+    resize: none;
+    border: none;
+    border-radius: 18px;
+    background: #f3f3f3;
+    color: #111111;
+    padding: 20px;
+    font-size: 22px;
+    text-align: center;
+    outline: none;
+}
+
+.profile-action-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 54px;
+    margin-top: 4px;
+}
+
+.profile-action-row button {
+    height: 72px;
+    border: none;
+    border-radius: 18px;
+    background: #f3f3f3;
+    color: #111111;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.profile-action-row .primary-action {
+    background: #f3f3f3;
+    font-weight: 400;
 }
 
 .message {
-    margin-top: 18px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-weight: 500;
+    margin-top: 26px;
+    width: 100%;
+    max-width: 760px;
+    text-align: center;
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
 }
 
 .success {
-    background: #d9f7e3;
-    color: #17603a;
+    background: #d8f5df;
+    color: #115b2e;
 }
 
 .error {
-    background: #fde8e8;
-    color: #9b1c1c;
+    background: #f7d9d9;
+    color: #8c1616;
+}
+
+.empty-account-state {
+    color: #ffffff;
+    font-size: 22px;
+    margin-top: 40px;
+}
+
+.account-footer-strip {
+    width: 100%;
+    height: 34px;
+    background: #f1f1f1;
+}
+
+.account-footer-cards {
+    width: 100%;
+    background: #3d9658;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 48px;
+    padding: 26px 38px 20px;
+}
+
+.footer-card {
+    background: #f3f3f3;
+    color: #111111;
+    border-radius: 12px;
+    min-height: 102px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 14px 16px;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+.footer-card p {
+    margin: 2px 0;
+}
+
+/* ----- RESPONSIVE ----- */
+
+@media (max-width: 1200px) {
+    .profile-top-fields,
+    .profile-action-row,
+    .account-footer-cards {
+        gap: 24px;
+    }
+
+    .figma-banner-title {
+        font-size: 34px;
+    }
+
+    .profile-avatar {
+        width: 260px;
+        height: 260px;
+    }
+}
+
+@media (max-width: 980px) {
+    .figma-shell {
+        flex-direction: column;
+    }
+
+    .figma-sidebar {
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .figma-sidebar-nav {
+        gap: 16px;
+    }
+
+    .figma-topbar {
+        grid-template-columns: 1fr;
+    }
+
+    .figma-signout {
+        min-height: 80px;
+    }
+
+    .profile-top-fields,
+    .profile-action-row,
+    .account-footer-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-secondary-fields .profile-field-box {
+        width: 100%;
+    }
+
+    .figma-banner-title {
+        white-space: normal;
+        padding: 18px 20px;
+        font-size: 28px;
+    }
 }
