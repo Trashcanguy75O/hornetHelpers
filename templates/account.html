@@ -17,39 +17,21 @@
         </div>
 
         {% if user %}
-        <form action="{{ url_for('update_account') }}" method="post" class="profile-editor-form">
+        <div class="profile-display-content">
             <div class="profile-top-fields">
-                <div class="profile-field-box readonly-field">
-                    <label for="username">Username</label>
-                    <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        value="{{ user.username }}"
-                        readonly
-                    >
+                <div class="profile-field-box">
+                    <label>Username</label>
+                    <div class="display-box">{{ user.username }}</div>
                 </div>
 
                 <div class="profile-field-box">
-                    <label for="full_name">Full Name</label>
-                    <input
-                        type="text"
-                        id="full_name"
-                        name="full_name"
-                        value="{{ user.full_name }}"
-                        required
-                    >
+                    <label>Full Name</label>
+                    <div class="display-box">{{ user.full_name }}</div>
                 </div>
 
                 <div class="profile-field-box">
-                    <label for="account_type">Account Type</label>
-                    <input
-                        type="text"
-                        id="account_type"
-                        name="account_type"
-                        value="Student Volunteer"
-                        readonly
-                    >
+                    <label>Account Type</label>
+                    <div class="display-box">Student Volunteer</div>
                 </div>
             </div>
 
@@ -60,57 +42,22 @@
 
             <div class="profile-secondary-fields">
                 <div class="profile-field-box">
-                    <label for="email">Email</label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value="{{ user.email }}"
-                        required
-                    >
+                    <label>Email</label>
+                    <div class="display-box">{{ user.email }}</div>
                 </div>
             </div>
 
-            <div class="profile-action-row">
-                <button type="button" class="secondary-action">Edit Username</button>
-                <button type="button" class="secondary-action">Edit Bio</button>
-                <button type="submit" class="primary-action">Save Changes</button>
+            {% if message %}
+            <div class="message {% if success %}success{% else %}error{% endif %}">
+                {{ message }}
             </div>
-        </form>
-
-        {% if message %}
-        <div class="message {% if success %}success{% else %}error{% endif %}">
-            {{ message }}
+            {% endif %}
         </div>
-        {% endif %}
         {% else %}
         <div class="empty-account-state">
             <p>No user found.</p>
         </div>
         {% endif %}
-    </section>
-
-    <section class="account-footer-strip"></section>
-
-    <section class="account-footer-cards">
-        <div class="footer-card">
-            <p>Hornet Helpers</p>
-            <p>Lassen Hall, Room 1013</p>
-            <p>Mon. - Fri. 8 a.m. - 5 p.m.</p>
-        </div>
-
-        <div class="footer-card">
-            <p>Phone: (916) 278 - 6231</p>
-            <p>careercenter@csus.edu</p>
-        </div>
-
-        <div class="footer-card">
-            <p>Placeholder</p>
-        </div>
-
-        <div class="footer-card">
-            <p>Placeholder</p>
-        </div>
-    </section>
+    <section>
 </div>
 {% endblock %}
