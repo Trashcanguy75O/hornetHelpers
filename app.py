@@ -55,8 +55,9 @@ def update_account():
     username = get_current_username()
     full_name = request.form["full_name"].strip()
     email = request.form["email"].strip()
+    bio = request.form["bio"].strip()
 
-    success, message = repo.update_user(username, full_name, email)
+    success, message = repo.update_user(username, full_name, email, bio)
 
     if success:
         return redirect(url_for("account"))

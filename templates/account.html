@@ -36,8 +36,14 @@
             </div>
 
             <div class="profile-bio-box">
-                <label for="bio">Bio</label>
-                <textarea id="bio" name="bio" readonly>Example Bio</textarea>
+                <label>Bio</label>
+                <div class="bio-display-box">
+                    {% if user.bio %}
+                        {{ user.bio }}
+                    {% else %}
+                        No bio added yet.
+                    {% endif %}
+                </div>
             </div>
 
             <div class="profile-secondary-fields">
@@ -63,6 +69,6 @@
             <p>No user found.</p>
         </div>
         {% endif %}
-    <section>
+    </section>
 </div>
 {% endblock %}
