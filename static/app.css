@@ -221,10 +221,21 @@ body {
     width: 100%;
     display: flex;
     justify-content: center;
+    gap: 54px;
+    align-items: flex-end;
 }
 
 .profile-secondary-fields .profile-field-box {
-    width: 520px;
+    width: 360px;
+}
+
+.action-box {
+    text-decoration: none;
+    color: #111111;
+}
+
+.action-box:hover {
+    background: #e8e8e8;
 }
 
 .profile-field-box {
@@ -339,6 +350,48 @@ body {
 
 .footer-card p {
     margin: 2px 0;
+}
+
+/* ----- Account Edit Page ----- */
+.profile-edit-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    align-items: center;
+}
+
+.edit-page-email-box {
+    width: 520px;
+}
+
+.edit-page-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 54px;
+    margin-top: 8px;
+}
+
+.save-action-btn {
+    min-width: 260px;
+    height: 72px;
+    border: none;
+    border-radius: 18px;
+    background: #f3f3f3;
+    color: #111111;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 28px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.save-action-btn:hover {
+    background: #e8e8e8;
+}
+
+.cancel-action {
+    min-width: 260px;
 }
 
 /* ----- RESPONSIVE ----- */

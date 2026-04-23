@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for 
 from DBMethods import UserRepository
 
 app = Flask(__name__)
@@ -44,17 +44,26 @@ def account():
     user = repo.find_user(username)
     return render_template("account.html", user=user)
 
+@app.route("/account/edit")
+def account_edit():
+    username = get_current_username()
+    user = repo.find_user(username)
+    return render_template("account_edit.html", user=user)
+
 @app.route("/account/update", methods=["POST"])
 def update_account():
     username = get_current_username()
-    full_name = request.form["full_name"]
-    email = request.form["email"]
+    full_name = request.form["full_name"].strip()
+    email = request.form["email"].strip()
 
     success, message = repo.update_user(username, full_name, email)
-    user = repo.find_user(username)
 
+    if success:
+        return redirect(url_for("account"))
+
+    user = repo.find_user(username)
     return render_template(
-        "account.html",
+        "account_edit.html",
         user=user,
         message=message,
         success=success
