@@ -1,0 +1,92 @@
+{% extends "app_base.html" %}
+
+{% block title %}Edit Account - Hornet Helpers{% endblock %}
+
+{% block content %}
+<div class="account-figma-page">
+    <section class="profile-hero">
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar">
+                {% if user and user.username %}
+                    {{ user.username[0].upper() }}
+                {% else %}
+                    U
+                {% endif %}
+            </div>
+            <button type="button" class="upload-photo-btn">Upload Photo</button>
+        </div>
+
+        {% if user %}
+        <form action="{{ url_for('update_account') }}" method="post" class="profile-edit-form">
+            <div class="profile-top-fields">
+                <div class="profile-field-box">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        value="{{ user.username }}"
+                        required
+                    >
+                </div>
+
+                <div class="profile-field-box">
+                    <label for="full_name">Full Name</label>
+                    <input
+                        type="text"
+                        id="full_name"
+                        name="full_name"
+                        value="{{ user.full_name }}"
+                        required
+                    >
+                </div>
+
+                <div class="profile-field-box">
+                    <label for="account_type">Account Type</label>
+                    <input
+                        type="text"
+                        id="account_type"
+                        name="account_type"
+                        value="Student Volunteer"
+                        readonly
+                    >
+                </div>
+            </div>
+
+            <div class="profile-bio-box">
+                <label for="bio">Bio</label>
+                <textarea id="bio" name="bio">{{ user.bio }}</textarea>
+            </div>
+
+            <div class="profile-secondary-fields">
+                <div class="profile-field-box edit-page-email-box">
+                    <label for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value="{{ user.email }}"
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="edit-page-actions">
+                <a href="{{ url_for('account') }}" class="display-box action-box cancel-action">Cancel</a>
+                <button type="submit" class="save-action-btn">Save Changes</button>
+            </div>
+        </form>
+
+        {% if message %}
+        <div class="message {% if success %}success{% else %}error{% endif %}">
+            {{ message }}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-account-state">
+            <p>No user found.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

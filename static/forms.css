@@ -5,9 +5,8 @@
 }
 
 .form-container p {
-    margin: 0;
-    position: absolute;
-    bottom: 15px;
+    margin: 12px 0 0 0;
+    position: static;
 }
 
 .form-row {

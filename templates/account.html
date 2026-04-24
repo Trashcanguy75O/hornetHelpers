@@ -1,0 +1,74 @@
+{% extends "app_base.html" %}
+
+{% block title %}My Account - Hornet Helpers{% endblock %}
+
+{% block content %}
+<div class="account-figma-page">
+    <section class="profile-hero">
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar">
+                {% if user and user.username %}
+                    {{ user.username[0].upper() }}
+                {% else %}
+                    U
+                {% endif %}
+            </div>
+            <button type="button" class="upload-photo-btn">Upload Photo</button>
+        </div>
+
+        {% if user %}
+        <div class="profile-display-content">
+            <div class="profile-top-fields">
+                <div class="profile-field-box">
+                    <label>Username</label>
+                    <div class="display-box">{{ user.username }}</div>
+                </div>
+
+                <div class="profile-field-box">
+                    <label>Full Name</label>
+                    <div class="display-box">{{ user.full_name }}</div>
+                </div>
+
+                <div class="profile-field-box">
+                    <label>Account Type</label>
+                    <div class="display-box">Student Volunteer</div>
+                </div>
+            </div>
+
+            <div class="profile-bio-box">
+                <label>Bio</label>
+                <div class="bio-display-box">
+                    {% if user.bio %}
+                        {{ user.bio }}
+                    {% else %}
+                        No bio added yet.
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="profile-secondary-fields">
+                <div class="profile-field-box edit-field-box">
+                    <label>&nbsp;</label>
+                    <a href="{{ url_for('account_edit') }}" class="display-box action-box">Edit</a>
+                </div>
+
+                <div class="profile-field-box email-field-box">
+                    <label>Email</label>
+                    <div class="display-box">{{ user.email }}</div>
+                </div>
+            </div>
+
+            {% if message %}
+            <div class="message {% if success %}success{% else %}error{% endif %}">
+                {{ message }}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-account-state">
+            <p>No user found.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

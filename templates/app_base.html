@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hornet Helpers{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+    <div class="figma-shell">
+        <aside class="figma-sidebar">
+            <div class="sidebar-logo-wrap">
+                <div class="sidebar-logo-circle">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hornet Helpers logo">
+                </div>
+            </div>
+
+            <nav class="figma-sidebar-nav">
+                <a href="{{ url_for('account') }}">Full Name</a>
+                <a href="#">Events Calendar</a>
+                <a href="#">Personal Calendar</a>
+                <a href="#">Resume Workshop</a>
+                <a href="#">Notifications</a>
+            </nav>
+        </aside>
+
+        <div class="figma-main">
+            <header class="figma-topbar">
+                <div class="figma-banner-title">
+                    March 20: Hornet Helper's Annual Potluck!
+                </div>
+                <a href="{{ url_for('logout') }}" class="figma-signout">Sign Out</a>
+            </header>
+
+            <main class="figma-content">
+                {% block content %}{% endblock %}
+            </main>
+
+            <section class="account-footer-strip"></section>
+
+            <section class="account-footer-cards">
+                <div class="footer-card">
+                    <p>Hornet Helpers</p>
+                    <p>Lassen Hall, Room 1013</p>
+                    <p>Mon. - Fri. 8 a.m. - 5 p.m.</p>
+                </div>
+
+                <div class="footer-card">
+                    <p>Phone: (916) 278 - 6231</p>
+                    <p>careercenter@csus.edu</p>
+                </div>
+
+                <div class="footer-card">
+                    <p>Placeholder</p>
+                </div>
+
+                <div class="footer-card">
+                    <p>Placeholder</p>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

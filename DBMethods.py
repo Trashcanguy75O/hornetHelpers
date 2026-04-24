@@ -4,12 +4,13 @@ from typing import List, Optional
 
 
 class User:
-    def __init__(self, id: int, username: str, password: str, full_name: str, email: str):
+    def __init__(self, id: int, username: str, password: str, full_name: str, email: str, bio: str):
         self.id = id
         self.username = username
         self.password = password
         self.full_name = full_name
         self.email = email
+        self.bio = bio
 
 
 class UserRepository:
@@ -47,12 +48,19 @@ class UserRepository:
                     Username TEXT NOT NULL UNIQUE,
                     Email TEXT NOT NULL UNIQUE,
                     Password TEXT NOT NULL,
-                    FullName TEXT NOT NULL
+                    FullName TEXT NOT NULL,
+                    Bio TEXT NOT NULL DEFAULT ''
                 );
             """)
+
+            cursor.execute("PRAGMA table_info(Users)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if "Bio" not in columns:
+                cursor.execute("ALTER TABLE Users ADD COLUMN Bio TEXT NOT NULL DEFAULT ''")
+
             conn.commit()
 
-    def add_user(self, username, password, full_name, email):
+    def add_user(self, username, password, full_name, email, bio=""):
         valid, message = self._validate_user(username, password, full_name, email)
         if not valid:
             return message
@@ -61,9 +69,9 @@ class UserRepository:
             with self._connect() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT INTO Users (Username, Email, Password, FullName)
-                    VALUES (?, ?, ?, ?)
-                """, (username, email, password, full_name))
+                    INSERT INTO Users (Username, Email, Password, FullName, Bio)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (username, email, password, full_name, bio))
                 conn.commit()
             return "User Added."
         except Exception as e:
@@ -73,7 +81,7 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT Id, Username, Password, FullName, Email
+                SELECT Id, Username, Password, FullName, Email, Bio
                 FROM Users
             """)
             rows = cursor.fetchall()
@@ -83,7 +91,7 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT Id, Username, Password, FullName, Email
+                SELECT Id, Username, Password, FullName, Email, Bio
                 FROM Users
                 WHERE Username = ?
             """, (username,))
@@ -94,7 +102,7 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT Id, Username, Password, FullName, Email
+                SELECT Id, Username, Password, FullName, Email, Bio
                 FROM Users
                 WHERE Email = ?
             """, (email,))
@@ -115,7 +123,10 @@ class UserRepository:
             conn.commit()
         return True
 
-    def update_user(self, username, new_full_name, new_email):
+    def update_user(self, current_username, new_username, new_full_name, new_email, new_bio):
+        if not re.match(r".+", new_username):
+            return False, "Invalid username"
+
         if not re.match(r".+", new_full_name):
             return False, "Invalid full name"
 
@@ -127,9 +138,9 @@ class UserRepository:
                 cursor = conn.cursor()
                 cursor.execute("""
                     UPDATE Users
-                    SET FullName = ?, Email = ?
+                    SET Username = ?, FullName = ?, Email = ?, Bio = ?
                     WHERE Username = ?
-                """, (new_full_name, new_email, username))
+                """, (new_username, new_full_name, new_email, new_bio, current_username))
                 conn.commit()
             return True, "Account updated successfully."
         except Exception as e:

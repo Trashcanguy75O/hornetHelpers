@@ -3,16 +3,8 @@
 {% block content %}
 <a class="signup-btn" href="{{ url_for('new_account') }}">Sign up here!</a>
 
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <div class="popup" style="display: block;">{{ messages[0] }}</div>
-    {% else %}
-        <div class="popup"></div>
-    {% endif %}
-{% endwith %}
-
 <div class="textbox">
-    <a href="{{ url_for('auth.login') }}">
+    <a href="{{ url_for('acc_login') }}">
         <div class="logo"></div>
     </a>
     <form method="POST">
@@ -27,9 +19,9 @@
             </div>
             <button type="submit">Enter</button>
             <p>
-                <a href="{{ url_for('username') }}">Forgot username</a>
+                <a href="{{ url_for('forgot_username') }}">Forgot username</a>
                 |
-                <a href="{{ url_for('password') }}">Forgot password</a>
+                <a href="{{ url_for('forgot_password') }}">Forgot password</a>
             </p>
         </div>
     </form>

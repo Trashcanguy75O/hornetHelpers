@@ -52,3 +52,9 @@ def login():
             return render_template("acc_login.html")
 
     return render_template("acc_login.html")
+
+@auth.route("/logout")
+def logout():
+    session.pop("user_id", None)
+    session.pop("username", None)
+    return redirect(url_for("auth.login"))
