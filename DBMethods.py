@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 import re
 from typing import List, Optional
 
@@ -53,10 +53,12 @@ class UserRepository:
                 );
             """)
 
-            cursor.execute("PRAGMA table_info(Users)")
-            columns = [row[1] for row in cursor.fetchall()]
-            if "Bio" not in columns:
+            # Attempt to add Bio column safely (ignore if it already exists)
+            try:
                 cursor.execute("ALTER TABLE Users ADD COLUMN Bio TEXT NOT NULL DEFAULT ''")
+            except sqlite3.OperationalError as e:
+                if "duplicate column name" not in str(e).lower():
+                    raise
 
             conn.commit()
 
