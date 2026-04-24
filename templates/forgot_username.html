@@ -2,24 +2,32 @@
 
 {% block content %}
 <a class="signup-btn" href="{{ url_for('new_account') }}">Sign up here!</a>
-<div class="popup" id="popup">Your information has been sent to the associated email.</div>
+
 <div class="textbox">
-    <a href="{{ url_for('auth.login') }}">
+    <a href="{{ url_for('acc_login') }}">
         <div class="logo"></div>
     </a>
-    <form>
+
+    <form method ="POST" action="{{ url_for('forgot_username') }}">
         <div class="form-container">
+
             <div class="form-row">
-                <label for="user">Email:</label>
-                <input type="text" id="user" name="user">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required placeholder="Enter your email">
+
+                <small class="input-hint">
+                    We'll send your username if this email is registered!
+                </small>
             </div>
-            <button type="button" onclick="showPopup()">Enter</button>
+
+            <button type="submit">Enter</button>
+
             <p>
-                <a href="{{ url_for('username') }}">Forgot username</a>
-                |
-                <a href="{{ url_for('password') }}">Forgot password</a>
+                <a href="{{ url_for('forgot_password') }}">Forgot password</a>
             </p>
+
         </div>
     </form>
 </div>
+
 {% endblock %}

@@ -5,9 +5,8 @@
 }
 
 .form-container p {
-    margin: 0;
-    position: absolute;
-    bottom: 15px;
+    margin: 12px 0 0 0;
+    position: static;
 }
 
 .form-row {
@@ -46,16 +45,6 @@
     text-decoration: underline;
 }
 
-.popup {
-    display: none;
-    position: absolute;
-    top: 15px;
-    color: white;
-    font-size: 14px;
-    padding: 8px;
-    text-align: center;
-}
-
 .signup-btn {
     position: absolute;
     top: 15px;
@@ -63,3 +52,4 @@
     color: white;
     text-decoration: none;
 }
+

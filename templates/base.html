@@ -5,7 +5,17 @@
 </head>
 <body>
     <div class="background"></div>
+
     <div class="centerbox">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for message in messages %}
+                    <p class="flash-error">{{ message }}</p>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
