@@ -123,7 +123,10 @@ class UserRepository:
             conn.commit()
         return True
 
-    def update_user(self, username, new_full_name, new_email, new_bio):
+    def update_user(self, current_username, new_username, new_full_name, new_email, new_bio):
+        if not re.match(r".+", new_username):
+            return False, "Invalid username"
+
         if not re.match(r".+", new_full_name):
             return False, "Invalid full name"
 
@@ -135,9 +138,9 @@ class UserRepository:
                 cursor = conn.cursor()
                 cursor.execute("""
                     UPDATE Users
-                    SET FullName = ?, Email = ?, Bio = ?
+                    SET Username = ?, FullName = ?, Email = ?, Bio = ?
                     WHERE Username = ?
-                """, (new_full_name, new_email, new_bio, username))
+                """, (new_username, new_full_name, new_email, new_bio, current_username))
                 conn.commit()
             return True, "Account updated successfully."
         except Exception as e:

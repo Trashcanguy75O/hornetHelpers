@@ -68,20 +68,28 @@ def account_edit():
 
 @app.route("/account/update", methods=["POST"])
 def update_account():
-    username = get_current_username()
-    if not username:
+    current_username = get_current_username()
+    if not current_username:
         return redirect(url_for("auth.login"))
 
+    new_username = request.form["username"].strip()
     full_name = request.form["full_name"].strip()
     email = request.form["email"].strip()
     bio = request.form["bio"].strip()
 
-    success, message = repo.update_user(username, full_name, email, bio)
+    success, message = repo.update_user(
+        current_username,
+        new_username,
+        full_name,
+        email,
+        bio
+    )
 
     if success:
+        session["username"] = new_username
         return redirect(url_for("account"))
 
-    user = repo.find_user(username)
+    user = repo.find_user(current_username)
     return render_template(
         "account_edit.html",
         user=user,
