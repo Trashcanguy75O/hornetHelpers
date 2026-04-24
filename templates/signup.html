@@ -1,39 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup Page</title>
-    <!-- Link to your CSS file -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+{% extends "base.html" %}
 
-    <div class="signup-container">
-        <form id="signupForm">
+{% block content %}
+<!-- Link back to Login instead of Signup -->
+<a class="signup-btn" href="{{ url_for('auth.login') }}">Already have an account? Login</a>
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+<div class="popup" style="display: block;">{{ messages[0] }}</div>
+    {% else %}
+<div class="popup"></div>
+    {% endif %}
+{% endwith %}
+
+<div class="textbox">
+    <!-- Clicking the logo returns to login or home -->
+    <a href="{{ url_for('auth.login') }}">
+        <div class="logo"></div>
+    </a>
+
+    <form method="POST">
+        <div class="form-container">
             <h2>Create Account</h2>
 
-            <div class="input-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" placeholder="Enter username" required>
+            <div class="form-row">
+                <label for="user">Username:</label>
+                <input type="text" id="user" name="user" required>
             </div>
 
-            <div class="input-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" placeholder="Enter email" required>
+            <div class="form-row">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
             </div>
 
-            <div class="input-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Create password" required>
+            <div class="form-row">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
             </div>
 
-            <button type="submit">Sign Up</button>
-            <p id="message"></p>
-        </form>
-    </div>
+            <div class="form-row">
+                <label for="confirm_password">Confirm Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+            </div>
 
-    <!-- Link to your JavaScript file -->
-    <script src="script.js"></script>
-</body>
-</html>
+            <button type="submit">Register</button>
+
+            <p>
+                By signing up, you agree to our <a href="#">Terms</a>.
+            </p>
+        </div>
+    </form>
+</div>
+{% endblock %}
