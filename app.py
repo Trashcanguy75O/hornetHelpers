@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, session
 from DBMethods import UserRepository
-import sqlite3
 import bcrypt
 import secrets
 from datetime import datetime, timedelta
@@ -31,50 +30,6 @@ def is_valid_password(password):
     return bool(re.match(pattern, password))
 
 
-def get_db_connection():
-    db_connection = sqlite3.connect("hornethelpers.db")
-    db_connection.row_factory = sqlite3.Row
-    return db_connection
-
-
-def init_db():
-    connectionToDB = get_db_connection()
-    cursor = connectionToDB.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            fullName TEXT NOT NULL DEFAULT '',
-            bio TEXT NOT NULL DEFAULT '',
-            failed_attempts INTEGER DEFAULT 0,
-            lockout_until TEXT DEFAULT NULL,
-            reset_token TEXT DEFAULT NULL,
-            reset_token_expiry TEXT DEFAULT NULL
-        )
-    """)
-
-    cursor.execute("PRAGMA table_info(users)")
-    columns = [row[1].lower() for row in cursor.fetchall()]
-
-    if "fullname" not in columns:
-        cursor.execute("ALTER TABLE users ADD COLUMN fullName TEXT NOT NULL DEFAULT ''")
-    if "bio" not in columns:
-        cursor.execute("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''")
-    if "failed_attempts" not in columns:
-        cursor.execute("ALTER TABLE users ADD COLUMN failed_attempts INTEGER DEFAULT 0")
-    if "lockout_until" not in columns:
-        cursor.execute("ALTER TABLE users ADD COLUMN lockout_until TEXT DEFAULT NULL")
-    if "reset_token" not in columns:
-        cursor.execute("ALTER TABLE users ADD COLUMN reset_token TEXT DEFAULT NULL")
-    if "reset_token_expiry" not in columns:
-        cursor.execute("ALTER TABLE users ADD COLUMN reset_token_expiry TEXT DEFAULT NULL")
-
-    connectionToDB.commit()
-    connectionToDB.close()
-
-
 @app.route("/homepage")
 def homepage():
     return render_template("homepage.html")
@@ -86,54 +41,36 @@ def acc_login():
         username = request.form["user"].strip()
         password = request.form["password"].strip()
 
-        connectionToDB = get_db_connection()
-        cursor = connectionToDB.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
+        user = repo.find_user(username)
 
         if not user:
-            connectionToDB.close()
             flash("Invalid username or password.")
             return redirect(url_for("acc_login"))
 
-        if user["lockout_until"]:
-            lockout_time = datetime.fromisoformat(user["lockout_until"])
+        if user.lockout_until:
+            lockout_time = datetime.fromisoformat(user.lockout_until)
             if datetime.now() < lockout_time:
-                connectionToDB.close()
                 flash("Account is locked. Please try again later.")
                 return redirect(url_for("acc_login"))
 
-        if bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
-            cursor.execute(
-                "UPDATE users SET failed_attempts = 0, lockout_until = NULL WHERE id = ?",
-                (user["id"],)
-            )
-            connectionToDB.commit()
-            connectionToDB.close()
+        if bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
+            repo.clear_failed_attempts(user.id)
 
-            session["user_id"] = user["id"]
-            session["username"] = user["username"]
+            session["user_id"] = user.id
+            session["username"] = user.username
 
             return redirect(url_for("homepage"))
         else:
-            failed_attempts = user["failed_attempts"] + 1
+            failed_attempts = user.failed_attempts + 1
 
             if failed_attempts >= 5:
                 lockout_time = datetime.now() + timedelta(minutes=15)
-                cursor.execute(
-                    "UPDATE users SET failed_attempts = ?, lockout_until = ? WHERE id = ?",
-                    (failed_attempts, lockout_time.isoformat(), user["id"])
-                )
+                repo.update_failed_attempts(user.id, failed_attempts, lockout_time.isoformat())
                 flash("Too many failed attempts. Account is locked for 15 minutes.")
             else:
-                cursor.execute(
-                    "UPDATE users SET failed_attempts = ? WHERE id = ?",
-                    (failed_attempts, user["id"])
-                )
+                repo.update_failed_attempts(user.id, failed_attempts)
                 flash("Incorrect username or password. Please try again.")
 
-            connectionToDB.commit()
-            connectionToDB.close()
             return redirect(url_for("acc_login"))
 
     return render_template("acc_login.html")
@@ -160,14 +97,10 @@ def forgot_username():
             flash("invalid email entered.")
             return redirect(url_for("forgot_username"))
 
-        connectionToDB = get_db_connection()
-        cursor = connectionToDB.cursor()
-        cursor.execute("SELECT username FROM users WHERE email = ?", (email,))
-        user = cursor.fetchone()
-        connectionToDB.close()
+        user = repo.find_by_email(email)
 
         if user:
-            send_username_email(email, user["username"])
+            send_username_email(email, user.username)
 
         flash("If this email is associated with an account, you should receive an email shortly!")
     return render_template("forgot_username.html")
@@ -182,24 +115,15 @@ def forgot_password():
             flash("invalid email entered.")
             return redirect(url_for("forgot_password"))
 
-        connectionToDB = get_db_connection()
-        cursor = connectionToDB.cursor()
-        cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
-        user = cursor.fetchone()
+        user = repo.find_by_email(email)
 
         if user:
             reset_token = secrets.token_urlsafe(32)
             reset_token_expiry = datetime.now() + timedelta(hours=1)
 
-            cursor.execute(
-                "UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?",
-                (reset_token, reset_token_expiry.isoformat(), user["id"])
-            )
-            connectionToDB.commit()
+            repo.set_reset_token(user.id, reset_token, reset_token_expiry.isoformat())
 
             send_recovery_email(email, reset_token)
-
-        connectionToDB.close()
 
         flash("If an account exists, you should receive a password reset link!")
         return redirect(url_for("forgot_password"))
@@ -209,11 +133,7 @@ def forgot_password():
 
 @app.route("/reset_password/<token>", methods=["GET", "POST"])
 def reset_password(token):
-    connectionToDB = get_db_connection()
-    cursor = connectionToDB.cursor()
-    cursor.execute("SELECT * FROM users WHERE reset_token = ?", (token,))
-    user = cursor.fetchone()
-    connectionToDB.close()
+    user = repo.find_user_by_reset_token(token)
 
     if (
         not user
@@ -237,14 +157,8 @@ def reset_password(token):
 
         hashed_password = generate_hashed_password(new_password)
 
-        connectionToDB = get_db_connection()
-        cursor = connectionToDB.cursor()
-        cursor.execute(
-            "UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL, failed_attempts = 0, lockout_until = NULL WHERE id = ?",
-            (hashed_password, user["id"])
-        )
-        connectionToDB.commit()
-        connectionToDB.close()
+        repo.change_password(user["username"], hashed_password)
+        repo.clear_reset_token(user["id"])
 
         flash("Password reset successfully.")
         return redirect(url_for("acc_login"))
@@ -305,6 +219,5 @@ def update_account():
 
 
 if __name__ == "__main__":
-    init_db()
     repo.initialize()
     app.run(debug=True)
