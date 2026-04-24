@@ -2,11 +2,20 @@
 
 {% block content %}
 <a class="signup-btn" href="{{ url_for('new_account') }}">Sign up here!</a>
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="popup" style="display: block;">{{ messages[0] }}</div>
+    {% else %}
+        <div class="popup"></div>
+    {% endif %}
+{% endwith %}
+
 <div class="textbox">
-    <a href="{{ url_for('login') }}">
+    <a href="{{ url_for('auth.login') }}">
         <div class="logo"></div>
     </a>
-    <form>
+    <form method="POST">
         <div class="form-container">
             <div class="form-row">
                 <label for="user">Username:</label>
@@ -16,8 +25,7 @@
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password">
             </div>
-            <button type="button" onclick="redirectHome()">Enter</button>
-                
+            <button type="submit">Enter</button>
             <p>
                 <a href="{{ url_for('username') }}">Forgot username</a>
                 |
