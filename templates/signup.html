@@ -2,7 +2,7 @@
 
 {% block content %}
 <!-- Link back to Login instead of Signup -->
-<a class="signup-btn" href="{{ url_for('auth.login') }}">Already have an account? Login</a>
+<a class="signup-btn" href="{{ url_for('acc_login') }}">Already have an account? Login</a>
 
 {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -14,7 +14,7 @@
 
 <div class="textbox">
     <!-- Clicking the logo returns to login or home -->
-    <a href="{{ url_for('auth.login') }}">
+    <a href="{{ url_for('acc_login') }}">
         <div class="logo"></div>
     </a>
 
