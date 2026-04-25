@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 import re
+from pathlib import Path
+from werkzeug.utils import secure_filename
 from acc_recovery import send_recovery_email, send_username_email, generate_hashed_password
 
 load_dotenv()
@@ -15,7 +17,10 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "temp_secret_key_for_development")
 
 repo = UserRepository("hornethelpers.db")
+UPLOAD_FOLDER = Path("static/uploads/profile_photos")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
+UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
 def get_current_username():
     return session.get("username")
@@ -30,6 +35,8 @@ def is_valid_password(password):
     pattern = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$"
     return bool(re.match(pattern, password))
 
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/homepage")
 def homepage():
@@ -193,17 +200,41 @@ def update_account():
     if not current_username:
         return redirect(url_for("acc_login"))
 
+    current_user = repo.find_user(current_username)
+    if not current_user:
+        return redirect(url_for("acc_login"))
+
     new_username = request.form["username"].strip()
     full_name = request.form["full_name"].strip()
     email = request.form["email"].strip()
     bio = request.form["bio"].strip()
+
+    photo = request.files.get("profile_photo")
+    profile_photo_path = None
+
+    if photo and photo.filename:
+        if not allowed_file(photo.filename):
+            user = repo.find_user(current_username)
+            return render_template(
+                "account_edit.html",
+                user=user,
+                message="Invalid file type. Please upload a PNG, JPG, or JPEG image.",
+                success=False
+            )
+
+        extension = photo.filename.rsplit(".", 1)[1].lower()
+        filename = secure_filename(f"user_{current_user.id}.{extension}")
+        save_path = UPLOAD_FOLDER / filename
+        photo.save(save_path)
+        profile_photo_path = f"uploads/profile_photos/{filename}"
 
     success, message = repo.update_user(
         current_username,
         new_username,
         full_name,
         email,
-        bio
+        bio,
+        profile_photo_path
     )
 
     if success:

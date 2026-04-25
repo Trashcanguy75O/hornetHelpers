@@ -7,17 +7,23 @@
     <section class="profile-hero">
         <div class="profile-avatar-wrap">
             <div class="profile-avatar">
-                {% if user and user.username %}
+                {% if user and user.profile_photo %}
+                    <img src="{{ url_for('static', filename=user.profile_photo) }}" alt="Profile photo" class="profile-avatar-image">
+                {% elif user and user.username %}
                     {{ user.username[0].upper() }}
                 {% else %}
                     U
                 {% endif %}
             </div>
-            <button type="button" class="upload-photo-btn">Upload Photo</button>
         </div>
 
         {% if user %}
-        <form action="{{ url_for('update_account') }}" method="post" class="profile-edit-form">
+        <form action="{{ url_for('update_account') }}" method="post" enctype="multipart/form-data" class="profile-edit-form">
+            <div class="profile-photo-upload-group">
+                <label for="profile_photo">Upload Profile Photo</label>
+                <input type="file" id="profile_photo" name="profile_photo" accept=".png,.jpg,.jpeg">
+            </div>
+
             <div class="profile-top-fields">
                 <div class="profile-field-box">
                     <label for="username">Username</label>
