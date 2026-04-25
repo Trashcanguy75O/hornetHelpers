@@ -374,6 +374,22 @@ body {
     align-items: center;
 }
 
+.profile-password-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    align-items: center;
+}
+
+.profile-password-fields {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
 .edit-page-email-box {
     width: 520px;
 }
