@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
 {% block content %}
-<!-- Link back to Login instead of Signup -->
 <a class="signup-btn" href="{{ url_for('acc_login') }}">Already have an account? Login</a>
 
 {% with messages = get_flashed_messages() %}
@@ -13,14 +11,19 @@
 {% endwith %}
 
 <div class="textbox">
-    <!-- Clicking the logo returns to login or home -->
     <a href="{{ url_for('acc_login') }}">
         <div class="logo"></div>
     </a>
-
-    <form method="POST">
+    <!-- Added explicit action to ensure it routes correctly -->
+    <form action="{{ url_for('new_account') }}" method="POST">
         <div class="form-container">
             <h2>Create Account</h2>
+
+            <!-- Added Full Name field to match repo.add_user requirements -->
+            <div class="form-row">
+                <label for="full_name">Full Name:</label>
+                <input type="text" id="full_name" name="full_name" required>
+            </div>
 
             <div class="form-row">
                 <label for="user">Username:</label>
@@ -43,10 +46,6 @@
             </div>
 
             <button type="submit">Register</button>
-
-            <p>
-                By signing up, you agree to our <a href="#">Terms</a>.
-            </p>
         </div>
     </form>
 </div>

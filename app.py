@@ -86,7 +86,8 @@ def acc_login():
 @app.route("/new_account", methods=["GET", "POST"])
 def new_account():
     if request.method == "POST":
-        # 1. Get data from the form
+        # 1. Get data from the form (including full_name)
+        full_name = request.form["full_name"].strip()
         username = request.form["user"].strip()
         email = request.form["email"].strip().lower()
         password = request.form["password"].strip()
@@ -100,30 +101,31 @@ def new_account():
         if not is_valid_email(email):
             flash("Invalid email address.")
             return redirect(url_for("new_account"))
-        
+
         if not is_valid_password(password):
             flash("Password must be 8+ characters with a letter and a number.")
             return redirect(url_for("new_account"))
 
-        # Check if user already exists
         if repo.find_user(username) or repo.find_by_email(email):
             flash("Username or Email already exists.")
             return redirect(url_for("new_account"))
 
-        # 3. Hash password and save
+        # 3. Hash password
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        
-        # We assume your repo has an 'add_user' method (common in this setup)
-        success = repo.add_user(username, email, hashed_password)
-        
-        if success:
+
+        # 4. Call repo.add_user with matching arguments:
+        # Your method: add_user(self, username, password, full_name, email, bio, photo)
+        result_message = repo.add_user(username, hashed_password, full_name, email)
+
+        if result_message == "User Added.":
             flash("Account created successfully! Please log in.")
             return redirect(url_for("acc_login"))
         else:
-            flash("An error occurred during registration.")
+            flash(f"Error: {result_message}")
             return redirect(url_for("new_account"))
 
     return render_template("new_account.html")
+
 
 
 @app.route("/logout")
