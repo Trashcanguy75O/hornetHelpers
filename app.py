@@ -232,6 +232,62 @@ def account_edit():
     user = repo.find_user(username)
     return render_template("account_edit.html", user=user)
 
+@app.route("/account/password")
+def account_password():
+    username = get_current_username()
+    if not username:
+        return redirect(url_for("acc_login"))
+
+    user = repo.find_user(username)
+    return render_template("account_password.html", user=user)
+
+@app.route("/account/password/update", methods=["POST"])
+def update_account_password():
+    username = get_current_username()
+    if not username:
+        return redirect(url_for("acc_login"))
+
+    user = repo.find_user(username)
+    if not user:
+        return redirect(url_for("acc_login"))
+
+    current_password = request.form["current_password"].strip()
+    new_password = request.form["new_password"].strip()
+    confirm_password = request.form["confirm_password"].strip()
+
+    if not bcrypt.checkpw(current_password.encode("utf-8"), user.password.encode("utf-8")):
+        return render_template(
+            "account_password.html",
+            user=user,
+            message="Current password is incorrect.",
+            success=False
+        )
+
+    if new_password != confirm_password:
+        return render_template(
+            "account_password.html",
+            user=user,
+            message="New passwords do not match.",
+            success=False
+        )
+
+    if not is_valid_password(new_password):
+        return render_template(
+            "account_password.html",
+            user=user,
+            message="Password must be at least 8 characters long and contain at least 1 letter and 1 number.",
+            success=False
+        )
+
+    hashed_password = generate_hashed_password(new_password)
+    repo.change_password(username, hashed_password)
+
+    return render_template(
+        "account_password.html",
+        user=user,
+        message="Password updated successfully.",
+        success=True
+    )
 
 @app.route("/account/update", methods=["POST"])
 def update_account():
