@@ -121,7 +121,6 @@ def new_account():
     return render_template("new_account.html")
 
 
-
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
