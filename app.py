@@ -135,11 +135,6 @@ def logout():
     return redirect(url_for("acc_login"))
 
 
-@app.route("/new_account")
-def new_account():
-    return render_template("new_account.html")
-
-
 @app.route("/forgot_username", methods=["GET", "POST"])
 def forgot_username():
     if request.method == "POST":
