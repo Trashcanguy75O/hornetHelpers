@@ -11,7 +11,8 @@ from acc_recovery import send_recovery_email, send_username_email, generate_hash
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
+#app.secret_key = os.getenv("SECRET_KEY")
+app.secret_key = os.getenv("SECRET_KEY", "temp_secret_key_for_development")
 
 repo = UserRepository("hornethelpers.db")
 
