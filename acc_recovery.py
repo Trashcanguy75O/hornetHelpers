@@ -7,7 +7,7 @@ import bcrypt
 load_dotenv() #loads the environment variables from the .env file
 
 def send_email(msg):
-        with smtplib.SMTP('smtp.office365.com', 587, timeout=10) as server:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
             server.starttls()
             server.login(os.getenv("MAIL_ADDRESS"), os.getenv("MAIL_PASSWORD"))
             server.send_message(msg)
