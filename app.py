@@ -83,6 +83,50 @@ def acc_login():
 
     return render_template("acc_login.html")
 
+@app.route("/new_account", methods=["GET", "POST"])
+def new_account():
+    if request.method == "POST":
+        # 1. Get data from the form
+        username = request.form["user"].strip()
+        email = request.form["email"].strip().lower()
+        password = request.form["password"].strip()
+        confirm_password = request.form["confirm_password"].strip()
+
+        # 2. Validation
+        if password != confirm_password:
+            flash("Passwords do not match.")
+            return redirect(url_for("new_account"))
+
+        if not is_valid_email(email):
+            flash("Invalid email address.")
+            return redirect(url_for("new_account"))
+        
+        if not is_valid_password(password):
+            flash("Password must be 8+ characters with a letter and a number.")
+            return redirect(url_for("new_account"))
+
+        # Check if user already exists
+        if repo.find_user(username) or repo.find_by_email(email):
+            flash("Username or Email already exists.")
+            return redirect(url_for("new_account"))
+
+        # 3. Hash password and save
+        # Note: Your code uses bcrypt.checkpw in login, so we use bcrypt.hashpw here
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        # We assume your repo has an 'add_user' method (common in this setup)
+        # If your method name is different, change 'add_user' to match DBMethods.py
+        success = repo.add_user(username, email, hashed_password)
+        
+        if success:
+            flash("Account created successfully! Please log in.")
+            return redirect(url_for("acc_login"))
+        else:
+            flash("An error occurred during registration.")
+            return redirect(url_for("new_account"))
+
+    return render_template("new_account.html")
+
 
 @app.route("/logout")
 def logout():
