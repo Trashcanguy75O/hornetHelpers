@@ -111,11 +111,9 @@ def new_account():
             return redirect(url_for("new_account"))
 
         # 3. Hash password and save
-        # Note: Your code uses bcrypt.checkpw in login, so we use bcrypt.hashpw here
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         # We assume your repo has an 'add_user' method (common in this setup)
-        # If your method name is different, change 'add_user' to match DBMethods.py
         success = repo.add_user(username, email, hashed_password)
         
         if success:
