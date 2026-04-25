@@ -4,15 +4,16 @@ from typing import List, Optional
 
 
 class User:
-    def __init__(self, id: int, username: str, password: str, full_name: str, email: str, bio: str, 
-                 failed_attempts: int = 0, lockout_until: str = None, reset_token: str = None, 
-                 reset_token_expiry: str = None):
+    def __init__(self, id: int, username: str, password: str, full_name: str, email: str, bio: str,
+                 profile_photo: str = "", failed_attempts: int = 0, lockout_until: str = None,
+                 reset_token: str = None, reset_token_expiry: str = None):
         self.id = id
         self.username = username
         self.password = password
         self.full_name = full_name
         self.email = email
         self.bio = bio
+        self.profile_photo = profile_photo
         self.failed_attempts = failed_attempts
         self.lockout_until = lockout_until
         self.reset_token = reset_token
@@ -56,6 +57,7 @@ class UserRepository:
                     password TEXT NOT NULL,
                     fullName TEXT NOT NULL DEFAULT '',
                     bio TEXT NOT NULL DEFAULT '',
+                    profile_photo TEXT NOT NULL DEFAULT '',
                     failed_attempts INTEGER DEFAULT 0,
                     lockout_until TEXT DEFAULT NULL,
                     reset_token TEXT DEFAULT NULL,
@@ -67,10 +69,8 @@ class UserRepository:
             columns_to_add = [
                 ("fullName", "TEXT NOT NULL DEFAULT ''"),
                 ("bio", "TEXT NOT NULL DEFAULT ''"),
+                ("profile_photo", "TEXT NOT NULL DEFAULT ''"),
                 ("failed_attempts", "INTEGER DEFAULT 0"),
-                ("lockout_until", "TEXT DEFAULT NULL"),
-                ("reset_token", "TEXT DEFAULT NULL"),
-                ("reset_token_expiry", "TEXT DEFAULT NULL"),
             ]
             
             for col_name, col_type in columns_to_add:
@@ -82,7 +82,7 @@ class UserRepository:
 
             conn.commit()
 
-    def add_user(self, username, password, full_name, email, bio=""):
+    def add_user(self, username, password, full_name, email, bio="", profile_photo=""):
         valid, message = self._validate_user(username, password, full_name, email)
         if not valid:
             return message
@@ -91,9 +91,9 @@ class UserRepository:
             with self._connect() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT INTO users (username, email, password, fullName, bio)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (username, email, password, full_name, bio))
+                    INSERT INTO users (username, email, password, fullName, bio, profile_photo)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (username, email, password, full_name, bio, profile_photo))
                 conn.commit()
             return "User Added."
         except Exception as e:
@@ -103,7 +103,7 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, username, password, fullName, email, bio
+                SELECT id, username, password, fullName, email, bio, profile_photo
                 FROM users
             """)
             rows = cursor.fetchall()
@@ -113,8 +113,8 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, username, password, fullName, email, bio,
-                       failed_attempts, lockout_until, reset_token, reset_token_expiry
+                SELECT id, username, password, fullName, email, bio, profile_photo,
+                    failed_attempts, lockout_until, reset_token, reset_token_expiry
                 FROM users
                 WHERE username = ?
             """, (username,))
@@ -127,10 +127,11 @@ class UserRepository:
                     full_name=row[3],
                     email=row[4],
                     bio=row[5],
-                    failed_attempts=row[6] or 0,
-                    lockout_until=row[7],
-                    reset_token=row[8],
-                    reset_token_expiry=row[9]
+                    profile_photo=row[6] or "",
+                    failed_attempts=row[7] or 0,
+                    lockout_until=row[8],
+                    reset_token=row[9],
+                    reset_token_expiry=row[10]
                 )
             return None
 
@@ -138,8 +139,8 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, username, password, fullName, email, bio,
-                       failed_attempts, lockout_until, reset_token, reset_token_expiry
+                SELECT id, username, password, fullName, email, bio, profile_photo,
+                    failed_attempts, lockout_until, reset_token, reset_token_expiry
                 FROM users
                 WHERE email = ?
             """, (email,))
@@ -152,10 +153,11 @@ class UserRepository:
                     full_name=row[3],
                     email=row[4],
                     bio=row[5],
-                    failed_attempts=row[6] or 0,
-                    lockout_until=row[7],
-                    reset_token=row[8],
-                    reset_token_expiry=row[9]
+                    profile_photo=row[6] or "",
+                    failed_attempts=row[7] or 0,
+                    lockout_until=row[8],
+                    reset_token=row[9],
+                    reset_token_expiry=row[10]
                 )
             return None
 
@@ -173,7 +175,7 @@ class UserRepository:
             conn.commit()
         return True
 
-    def update_user(self, current_username, new_username, new_full_name, new_email, new_bio):
+    def update_user(self, current_username, new_username, new_full_name, new_email, new_bio, new_profile_photo=None):
         if not re.match(r".+", new_username):
             return False, "Invalid username"
 
@@ -186,11 +188,20 @@ class UserRepository:
         try:
             with self._connect() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                    UPDATE users
-                    SET username = ?, fullName = ?, email = ?, bio = ?
-                    WHERE username = ?
-                """, (new_username, new_full_name, new_email, new_bio, current_username))
+
+                if new_profile_photo is not None:
+                    cursor.execute("""
+                        UPDATE users
+                        SET username = ?, fullName = ?, email = ?, bio = ?, profile_photo = ?
+                        WHERE username = ?
+                    """, (new_username, new_full_name, new_email, new_bio, new_profile_photo, current_username))
+                else:
+                    cursor.execute("""
+                        UPDATE users
+                        SET username = ?, fullName = ?, email = ?, bio = ?
+                        WHERE username = ?
+                    """, (new_username, new_full_name, new_email, new_bio, current_username))
+
                 conn.commit()
             return True, "Account updated successfully."
         except Exception as e:
@@ -200,8 +211,8 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, username, password, fullName, email, bio,
-                       failed_attempts, lockout_until, reset_token, reset_token_expiry
+                SELECT id, username, password, fullName, email, bio, profile_photo,
+                    failed_attempts, lockout_until, reset_token, reset_token_expiry
                 FROM users
                 WHERE reset_token = ?
             """, (token,))
@@ -214,10 +225,11 @@ class UserRepository:
                     "fullName": row[3],
                     "email": row[4],
                     "bio": row[5],
-                    "failed_attempts": row[6],
-                    "lockout_until": row[7],
-                    "reset_token": row[8],
-                    "reset_token_expiry": row[9]
+                    "profile_photo": row[6],
+                    "failed_attempts": row[7],
+                    "lockout_until": row[8],
+                    "reset_token": row[9],
+                    "reset_token_expiry": row[10]
                 }
             return None
 
