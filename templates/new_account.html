@@ -19,10 +19,40 @@
         <div class="form-container">
             <h2>Create Account</h2>
 
-            <!-- Added Full Name field to match repo.add_user requirements -->
+            <!-- Account Type Selection -->
+            <div class="form-row">
+                <label for="account_type">Account Type:</label>
+                <select id="account_type" name="account_type" onchange="toggleAccountFields()" required>
+                    <option value="Volunteer" selected>Volunteer</option>
+                    <option value="Organizer">Organizer</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+
             <div class="form-row">
                 <label for="full_name">Full Name:</label>
                 <input type="text" id="full_name" name="full_name" required>
+            </div>
+            <!-- If Organizer is selected we will require an Organization name and Registration Pin -->
+            <div class="form-row" id="organizer-fields" style="display: none;">
+                <label for="organization_name">Organization Name:</label>
+                <input type="text" id="organization_name" name="organization_name">
+            </div>
+
+            <div class="form-row" id="organizer-pin-field" style="display: none;">
+                <label for="organizer_pin">Organizer Registration Pin:</label>
+                <input type="password" id="organizer_pin" name="organizer_pin">
+            </div>
+
+            <!-- If Admin is selected we will require a Career Center Role and Registration Pin -->
+            <div class="form-row" id="admin-fields" style="display: none;">
+                <label for="career_center_role">Career Center Role:</label>
+                <input type="text" id="career_center_role" name="career_center_role">
+            </div>
+
+            <div class="form-row" id="admin-pin-field" style="display: none;">
+                <label for="admin_pin">Admin Registration Pin:</label>
+                <input type="password" id="admin_pin" name="admin_pin">
             </div>
 
             <div class="form-row">
@@ -49,4 +79,24 @@
         </div>
     </form>
 </div>
+
+                            <!-- Account type toggle. Shows appropriate fields based on selection -->
+<script>
+    function toggleAccountFields() {
+        const accountType = document.getElementById('account_type').value;
+        const organizerFields = document.getElementById('organizer-fields');
+        const organizerPinField = document.getElementById('organizer-pin-field');
+        const adminFields = document.getElementById('admin-fields');
+        const adminPinField = document.getElementById('admin-pin-field');
+
+        organizerFields.style.display = accountType === 'Organizer' ? 'block' : 'none';
+        organizerPinField.style.display = accountType === 'Organizer' ? 'block' : 'none';
+        adminFields.style.display = accountType === 'Admin' ? 'block' : 'none';
+        adminPinField.style.display = accountType === 'Admin' ? 'block' : 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleAccountFields();
+    });
+</script>
 {% endblock %}

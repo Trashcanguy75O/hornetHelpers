@@ -33,9 +33,25 @@
 
                 <div class="profile-field-box">
                     <label>Account Type</label>
-                    <div class="display-box">Student Volunteer</div>
+                    <div class="display-box">{{ user.account_type }}</div>
                 </div>
             </div>
+
+            {% if user.account_type == 'Organizer' %}
+            <div class="profile-top-fields">
+                <div class="profile-field-box">
+                    <label>Organization</label>
+                    <div class="display-box">{{ user.organization_name }}</div>
+                </div>
+            </div>
+            {% elif user.account_type == 'Admin' %}
+            <div class="profile-top-fields">
+                <div class="profile-field-box">
+                    <label>Career Center Role</label>
+                    <div class="display-box">{{ user.career_center_role }}</div>
+                </div>
+            </div>
+            {% endif %}
 
             <div class="profile-bio-box">
                 <label>Bio</label>

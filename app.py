@@ -10,11 +10,12 @@ from pathlib import Path
 from werkzeug.utils import secure_filename
 from acc_recovery import send_recovery_email, send_username_email, generate_hashed_password
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 app = Flask(__name__)
-#app.secret_key = os.getenv("SECRET_KEY")
-app.secret_key = os.getenv("SECRET_KEY", "temp_secret_key_for_development")
+SECRET_KEY = os.getenv("SECRET_KEY")
+app.secret_key = SECRET_KEY
 
 repo = UserRepository("hornethelpers.db")
 UPLOAD_FOLDER = Path("static/uploads/profile_photos")
@@ -22,12 +23,18 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
+ADMIN_REGISTRATION_PIN = os.getenv("ADMIN_REGISTRATION_PIN")
+ORGANIZER_REGISTRATION_PIN = os.getenv("ORGANIZER_REGISTRATION_PIN")
+
+ALLOWED_ACCOUNT_TYPES = {"Volunteer", "Organizer", "Admin"}
+
+
 def get_current_username():
     return session.get("username")
 
 
 def is_valid_email(email):
-    valid_email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov)$"
+    valid_email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov|me)$"
     return bool(re.match(valid_email_pattern, email))
 
 
@@ -41,6 +48,33 @@ def allowed_file(filename):
 @app.route("/homepage")
 def homepage():
     return render_template("homepage.html")
+
+# Updated Routes for each user type. Checks if user is logged in and then redirects to appropriate homepage. If not logged in, redirects to login page.
+@app.route("/volunteer/home")
+def volunteer_home():
+    username = get_current_username()
+    if not username:
+        return redirect(url_for("acc_login"))
+    user = repo.find_user(username)
+    return render_template("volunteer_home.html", user=user)
+
+
+@app.route("/organizer/home")
+def organizer_home():
+    username = get_current_username()
+    if not username:
+        return redirect(url_for("acc_login"))
+    user = repo.find_user(username)
+    return render_template("organizer_home.html", user=user)
+
+
+@app.route("/admin/home")
+def admin_home():
+    username = get_current_username()
+    if not username:
+        return redirect(url_for("acc_login"))
+    user = repo.find_user(username)
+    return render_template("admin_home.html", user=user)
 
 
 @app.route("/acc_login", methods=["GET", "POST"])
@@ -67,7 +101,12 @@ def acc_login():
             session["user_id"] = user.id
             session["username"] = user.username
 
-            return redirect(url_for("homepage"))
+            if user.account_type == "Admin":
+                return redirect(url_for("admin_home"))
+            elif user.account_type == "Organizer":
+                return redirect(url_for("organizer_home"))
+            else:
+                return redirect(url_for("volunteer_home"))
         else:
             failed_attempts = user.failed_attempts + 1
 
@@ -86,14 +125,15 @@ def acc_login():
 @app.route("/new_account", methods=["GET", "POST"])
 def new_account():
     if request.method == "POST":
-        # 1. Get data from the form (including full_name)
         full_name = request.form["full_name"].strip()
         username = request.form["user"].strip()
         email = request.form["email"].strip().lower()
         password = request.form["password"].strip()
         confirm_password = request.form["confirm_password"].strip()
+        account_type = request.form.get("account_type", "Volunteer").strip()
+        organization_name = ""
+        career_center_role = ""
 
-        # 2. Validation
         if password != confirm_password:
             flash("Passwords do not match.")
             return redirect(url_for("new_account"))
@@ -106,23 +146,61 @@ def new_account():
             flash("Password must be 8+ characters with a letter and a number.")
             return redirect(url_for("new_account"))
 
+        if account_type not in ALLOWED_ACCOUNT_TYPES:
+            flash("Please select a valid account type.")
+            return redirect(url_for("new_account"))
+
         if repo.find_user(username) or repo.find_by_email(email):
             flash("Username or Email already exists.")
             return redirect(url_for("new_account"))
 
-        # 3. Hash password
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+# Checks appropriate fields based on account type selected. Organizer requires organization name and registration pin. Admin requires career center role and registration pin.
+        if account_type == "Organizer":
+            organization_name = request.form.get("organization_name", "").strip()
+            organizer_pin = request.form.get("organizer_pin", "").strip()
+            if not organization_name:
+                flash("Organization name is required for organizer registration.")
+                return redirect(url_for("new_account"))
+            if organizer_pin != ORGANIZER_REGISTRATION_PIN:
+                flash("Invalid organizer registration pin.")
+                return redirect(url_for("new_account"))
 
-        # 4. Call repo.add_user with matching arguments:
-        # Your method: add_user(self, username, password, full_name, email, bio, photo)
-        result_message = repo.add_user(username, hashed_password, full_name, email)
+        if account_type == "Admin":
+            career_center_role = request.form.get("career_center_role", "").strip()
+            admin_pin = request.form.get("admin_pin", "").strip()
+            if not career_center_role:
+                flash("Career center role is required for admin registration.")
+                return redirect(url_for("new_account"))
+            if admin_pin != ADMIN_REGISTRATION_PIN:
+                flash("Invalid admin registration pin.")
+                return redirect(url_for("new_account"))
+
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        result_message = repo.add_user(
+            username,
+            hashed_password,
+            full_name,
+            email,
+            account_type,
+            organization_name=organization_name,
+            career_center_role=career_center_role
+        )
 
         if result_message == "User Added.":
-            flash("Account created successfully! Please log in.")
-            return redirect(url_for("acc_login"))
-        else:
-            flash(f"Error: {result_message}")
-            return redirect(url_for("new_account"))
+            created_user = repo.find_user(username)
+            if created_user:
+                session["user_id"] = created_user.id
+                session["username"] = created_user.username
+
+            flash("Account created successfully!")
+            if account_type == "Admin":
+                return redirect(url_for("admin_home"))
+            if account_type == "Organizer":
+                return redirect(url_for("organizer_home"))
+            return redirect(url_for("volunteer_home"))
+
+        flash(f"Error: {result_message}")
+        return redirect(url_for("new_account"))
 
     return render_template("new_account.html")
 
@@ -347,4 +425,6 @@ def update_account():
 
 if __name__ == "__main__":
     repo.initialize()
+    if not SECRET_KEY or not ADMIN_REGISTRATION_PIN or not ORGANIZER_REGISTRATION_PIN:
+        raise ValueError("SECRET_KEY, ADMIN_REGISTRATION_PIN and ORGANIZER_REGISTRATION_PIN must be set in environment variables")
     app.run(debug=True)

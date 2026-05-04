@@ -5,7 +5,9 @@ from typing import List, Optional
 
 class User:
     def __init__(self, id: int, username: str, password: str, full_name: str, email: str, bio: str,
-                 profile_photo: str = "", failed_attempts: int = 0, lockout_until: str = None,
+                 account_type: str = "Volunteer", organization_name: str = "",
+                 career_center_role: str = "", profile_photo: str = "",
+                 failed_attempts: int = 0, lockout_until: str = None,
                  reset_token: str = None, reset_token_expiry: str = None):
         self.id = id
         self.username = username
@@ -13,6 +15,9 @@ class User:
         self.full_name = full_name
         self.email = email
         self.bio = bio
+        self.account_type = account_type
+        self.organization_name = organization_name
+        self.career_center_role = career_center_role
         self.profile_photo = profile_photo
         self.failed_attempts = failed_attempts
         self.lockout_until = lockout_until
@@ -27,13 +32,14 @@ class UserRepository:
     def _connect(self):
         return sqlite3.connect(self.database_path)
 
-    def _validate_user(self, username, password, full_name, email):
+    def _validate_user(self, username, password, full_name, email, account_type):
         patterns = {
             "username": r".+",
             "password": r".+",
             "full_name": r".+",
-            "email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|gov|edu|net)$"
+            "email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|gov|edu|net|org|me)$"
         }
+        allowed_types = {"Volunteer", "Organizer", "Admin"}
 
         if not re.match(patterns["username"], username):
             return False, "Invalid username"
@@ -43,6 +49,8 @@ class UserRepository:
             return False, "Invalid full name"
         if not re.match(patterns["email"], email):
             return False, "Invalid email"
+        if account_type not in allowed_types:
+            return False, "Invalid account type"
 
         return True, ""
 
@@ -57,6 +65,9 @@ class UserRepository:
                     password TEXT NOT NULL,
                     fullName TEXT NOT NULL DEFAULT '',
                     bio TEXT NOT NULL DEFAULT '',
+                    account_type TEXT NOT NULL DEFAULT 'Volunteer',
+                    organization_name TEXT NOT NULL DEFAULT '',
+                    career_center_role TEXT NOT NULL DEFAULT '',
                     profile_photo TEXT NOT NULL DEFAULT '',
                     failed_attempts INTEGER DEFAULT 0,
                     lockout_until TEXT DEFAULT NULL,
@@ -69,6 +80,9 @@ class UserRepository:
             columns_to_add = [
                 ("fullName", "TEXT NOT NULL DEFAULT ''"),
                 ("bio", "TEXT NOT NULL DEFAULT ''"),
+                ("account_type", "TEXT NOT NULL DEFAULT 'Volunteer'"),
+                ("organization_name", "TEXT NOT NULL DEFAULT ''"),
+                ("career_center_role", "TEXT NOT NULL DEFAULT ''"),
                 ("profile_photo", "TEXT NOT NULL DEFAULT ''"),
                 ("failed_attempts", "INTEGER DEFAULT 0"),
             ]
@@ -82,8 +96,9 @@ class UserRepository:
 
             conn.commit()
 
-    def add_user(self, username, password, full_name, email, bio="", profile_photo=""):
-        valid, message = self._validate_user(username, password, full_name, email)
+    def add_user(self, username, password, full_name, email, account_type="Volunteer",
+                 organization_name="", career_center_role="", bio="", profile_photo=""):
+        valid, message = self._validate_user(username, password, full_name, email, account_type)
         if not valid:
             return message
 
@@ -91,9 +106,15 @@ class UserRepository:
             with self._connect() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT INTO users (username, email, password, fullName, bio, profile_photo)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (username, email, password, full_name, bio, profile_photo))
+                    INSERT INTO users (
+                        username, email, password, fullName, bio,
+                        account_type, organization_name, career_center_role, profile_photo
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    username, email, password, full_name, bio,
+                    account_type, organization_name, career_center_role, profile_photo
+                ))
                 conn.commit()
             return "User Added."
         except Exception as e:
@@ -103,7 +124,8 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, username, password, fullName, email, bio, profile_photo
+                SELECT id, username, password, fullName, email, bio,
+                    account_type, organization_name, career_center_role, profile_photo
                 FROM users
             """)
             rows = cursor.fetchall()
@@ -113,7 +135,8 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, username, password, fullName, email, bio, profile_photo,
+                SELECT id, username, password, fullName, email, bio,
+                    account_type, organization_name, career_center_role, profile_photo,
                     failed_attempts, lockout_until, reset_token, reset_token_expiry
                 FROM users
                 WHERE username = ?
@@ -127,11 +150,14 @@ class UserRepository:
                     full_name=row[3],
                     email=row[4],
                     bio=row[5],
-                    profile_photo=row[6] or "",
-                    failed_attempts=row[7] or 0,
-                    lockout_until=row[8],
-                    reset_token=row[9],
-                    reset_token_expiry=row[10]
+                    account_type=row[6],
+                    organization_name=row[7] or "",
+                    career_center_role=row[8] or "",
+                    profile_photo=row[9] or "",
+                    failed_attempts=row[10] or 0,
+                    lockout_until=row[11],
+                    reset_token=row[12],
+                    reset_token_expiry=row[13]
                 )
             return None
 
@@ -139,7 +165,8 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, username, password, fullName, email, bio, profile_photo,
+                SELECT id, username, password, fullName, email, bio,
+                    account_type, organization_name, career_center_role, profile_photo,
                     failed_attempts, lockout_until, reset_token, reset_token_expiry
                 FROM users
                 WHERE email = ?
@@ -153,11 +180,14 @@ class UserRepository:
                     full_name=row[3],
                     email=row[4],
                     bio=row[5],
-                    profile_photo=row[6] or "",
-                    failed_attempts=row[7] or 0,
-                    lockout_until=row[8],
-                    reset_token=row[9],
-                    reset_token_expiry=row[10]
+                    account_type=row[6],
+                    organization_name=row[7] or "",
+                    career_center_role=row[8] or "",
+                    profile_photo=row[9] or "",
+                    failed_attempts=row[10] or 0,
+                    lockout_until=row[11],
+                    reset_token=row[12],
+                    reset_token_expiry=row[13]
                 )
             return None
 
@@ -182,7 +212,7 @@ class UserRepository:
         if not re.match(r".+", new_full_name):
             return False, "Invalid full name"
 
-        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|gov|edu|net)$", new_email):
+        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|gov|edu|net|org|me)$", new_email):
             return False, "Invalid email"
 
         try:
@@ -211,7 +241,8 @@ class UserRepository:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, username, password, fullName, email, bio, profile_photo,
+                SELECT id, username, password, fullName, email, bio,
+                    account_type, organization_name, career_center_role, profile_photo,
                     failed_attempts, lockout_until, reset_token, reset_token_expiry
                 FROM users
                 WHERE reset_token = ?
@@ -225,11 +256,14 @@ class UserRepository:
                     "fullName": row[3],
                     "email": row[4],
                     "bio": row[5],
-                    "profile_photo": row[6],
-                    "failed_attempts": row[7],
-                    "lockout_until": row[8],
-                    "reset_token": row[9],
-                    "reset_token_expiry": row[10]
+                    "account_type": row[6],
+                    "organization_name": row[7],
+                    "career_center_role": row[8],
+                    "profile_photo": row[9],
+                    "failed_attempts": row[10],
+                    "lockout_until": row[11],
+                    "reset_token": row[12],
+                    "reset_token_expiry": row[13]
                 }
             return None
 
