@@ -384,6 +384,24 @@ def logout():
 
     return redirect(url_for("acc_login"))
 
+@app.route("/dashboard")
+def dashboard():
+    username = get_current_username()
+
+    if not username:
+        return redirect(url_for("acc_login"))
+
+    user = user_repo.find_user(username)
+
+    if not user:
+        return redirect(url_for("acc_login"))
+
+    if user.account_type == "Admin":
+        return redirect(url_for("admin_home"))
+    elif user.account_type == "Organizer":
+        return redirect(url_for("organizer_home"))
+    else:
+        return redirect(url_for("volunteer_home"))
 
 @app.route("/forgot_username", methods=["GET", "POST"])
 def forgot_username():
