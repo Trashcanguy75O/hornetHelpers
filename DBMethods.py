@@ -1,11 +1,10 @@
 import re
 import sqlite3
-from datetime import datetime
 from typing import List, Optional
 
 
 # =========================================================
-# USER MODEL
+# MODELS
 # =========================================================
 
 
@@ -43,11 +42,6 @@ class User:
         self.reset_token_expiry = reset_token_expiry
 
 
-# =========================================================
-# EVENT MODEL
-# =========================================================
-
-
 class Event:
     def __init__(
         self,
@@ -73,16 +67,20 @@ class Event:
 
 
 # =========================================================
-# USER REPOSITORY
+# DATABASE (MERGED REPOSITORIES)
 # =========================================================
 
 
-class UserRepository:
+class Database:
     def __init__(self, database_path: str):
         self.database_path = database_path
 
     def _connect(self):
         return sqlite3.connect(self.database_path)
+
+    # =====================================================
+    # VALIDATION (USER)
+    # =====================================================
 
     def _validate_user(
         self,
@@ -103,11 +101,7 @@ class UserRepository:
             ),
         }
 
-        allowed_types = {
-            "Volunteer",
-            "Organizer",
-            "Admin",
-        }
+        allowed_types = {"Volunteer", "Organizer", "Admin"}
 
         if not re.match(patterns["username"], username):
             return False, "Invalid username"
@@ -127,13 +121,14 @@ class UserRepository:
         return True, ""
 
     # =====================================================
-    # INITIALIZE USERS TABLE
+    # INITIALIZE TABLES (USERS + EVENTS)
     # =====================================================
 
     def initialize(self):
         with self._connect() as conn:
             cursor = conn.cursor()
 
+            # USERS
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS users (
@@ -168,19 +163,50 @@ class UserRepository:
             for col_name, col_type in columns_to_add:
                 try:
                     cursor.execute(
-                        f"""
-                        ALTER TABLE users
-                        ADD COLUMN {col_name} {col_type}
-                        """
+                        f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"
                     )
                 except sqlite3.OperationalError as e:
                     if "duplicate column name" not in str(e).lower():
                         raise
 
+            # EVENTS
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    location TEXT NOT NULL,
+                    start_datetime TEXT NOT NULL,
+                    end_datetime TEXT NOT NULL,
+                    created_by_username TEXT NOT NULL,
+                    created_by_account_type TEXT NOT NULL,
+                    organization_name TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS event_signups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event_id INTEGER NOT NULL,
+                    username TEXT NOT NULL,
+                    account_type TEXT NOT NULL,
+                    signed_up_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (event_id)
+                        REFERENCES events(id)
+                        ON DELETE CASCADE,
+                    UNIQUE(event_id, username)
+                )
+                """
+            )
+
             conn.commit()
 
     # =====================================================
-    # ADD USER
+    # USER METHODS
     # =====================================================
 
     def add_user(
@@ -209,7 +235,6 @@ class UserRepository:
         try:
             with self._connect() as conn:
                 cursor = conn.cursor()
-
                 cursor.execute(
                     """
                     INSERT INTO users (
@@ -237,7 +262,6 @@ class UserRepository:
                         profile_photo,
                     ),
                 )
-
                 conn.commit()
 
             return "User Added."
@@ -245,113 +269,67 @@ class UserRepository:
         except Exception as e:
             return f"Error: {e}"
 
-    # =====================================================
-    # LIST USERS
-    # =====================================================
-
     def list_users(self) -> List[User]:
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    username,
-                    password,
-                    fullName,
-                    email,
-                    bio,
-                    account_type,
-                    organization_name,
-                    career_center_role,
-                    profile_photo
+                SELECT id, username, password, fullName, email,
+                       bio, account_type, organization_name,
+                       career_center_role, profile_photo
                 FROM users
                 """
             )
-
             rows = cursor.fetchall()
-
             return [User(*row) for row in rows]
-
-    # =====================================================
-    # FIND USER BY USERNAME
-    # =====================================================
 
     def find_user(self, username) -> Optional[User]:
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    username,
-                    password,
-                    fullName,
-                    email,
-                    bio,
-                    account_type,
-                    organization_name,
-                    career_center_role,
-                    profile_photo,
-                    failed_attempts,
-                    lockout_until,
-                    reset_token,
-                    reset_token_expiry
+                SELECT id, username, password, fullName, email,
+                       bio, account_type, organization_name,
+                       career_center_role, profile_photo,
+                       failed_attempts, lockout_until,
+                       reset_token, reset_token_expiry
                 FROM users
                 WHERE username = ?
                 """,
                 (username,),
             )
-
             row = cursor.fetchone()
 
-            if row:
-                return User(
-                    id=row[0],
-                    username=row[1],
-                    password=row[2],
-                    full_name=row[3],
-                    email=row[4],
-                    bio=row[5],
-                    account_type=row[6],
-                    organization_name=row[7] or "",
-                    career_center_role=row[8] or "",
-                    profile_photo=row[9] or "",
-                    failed_attempts=row[10] or 0,
-                    lockout_until=row[11],
-                    reset_token=row[12],
-                    reset_token_expiry=row[13],
-                )
+            if not row:
+                return None
 
-            return None
-
-    # =====================================================
-    # FIND USER BY EMAIL
-    # =====================================================
+            return User(
+                id=row[0],
+                username=row[1],
+                password=row[2],
+                full_name=row[3],
+                email=row[4],
+                bio=row[5],
+                account_type=row[6],
+                organization_name=row[7] or "",
+                career_center_role=row[8] or "",
+                profile_photo=row[9] or "",
+                failed_attempts=row[10] or 0,
+                lockout_until=row[11],
+                reset_token=row[12],
+                reset_token_expiry=row[13],
+            )
 
     def find_by_email(self, email: str) -> Optional[User]:
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    username,
-                    password,
-                    fullName,
-                    email,
-                    bio,
-                    account_type,
-                    organization_name,
-                    career_center_role,
-                    profile_photo,
-                    failed_attempts,
-                    lockout_until,
-                    reset_token,
-                    reset_token_expiry
+                SELECT id, username, password, fullName, email,
+                       bio, account_type, organization_name,
+                       career_center_role, profile_photo,
+                       failed_attempts, lockout_until,
+                       reset_token, reset_token_expiry
                 FROM users
                 WHERE email = ?
                 """,
@@ -360,29 +338,25 @@ class UserRepository:
 
             row = cursor.fetchone()
 
-            if row:
-                return User(
-                    id=row[0],
-                    username=row[1],
-                    password=row[2],
-                    full_name=row[3],
-                    email=row[4],
-                    bio=row[5],
-                    account_type=row[6],
-                    organization_name=row[7] or "",
-                    career_center_role=row[8] or "",
-                    profile_photo=row[9] or "",
-                    failed_attempts=row[10] or 0,
-                    lockout_until=row[11],
-                    reset_token=row[12],
-                    reset_token_expiry=row[13],
-                )
+            if not row:
+                return None
 
-            return None
-
-    # =====================================================
-    # PASSWORD MANAGEMENT
-    # =====================================================
+            return User(
+                id=row[0],
+                username=row[1],
+                password=row[2],
+                full_name=row[3],
+                email=row[4],
+                bio=row[5],
+                account_type=row[6],
+                organization_name=row[7] or "",
+                career_center_role=row[8] or "",
+                profile_photo=row[9] or "",
+                failed_attempts=row[10] or 0,
+                lockout_until=row[11],
+                reset_token=row[12],
+                reset_token_expiry=row[13],
+            )
 
     def change_password(self, username, new_password):
         if not re.match(r".+", new_password):
@@ -390,23 +364,13 @@ class UserRepository:
 
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
-                """
-                UPDATE users
-                SET password = ?
-                WHERE username = ?
-                """,
+                "UPDATE users SET password = ? WHERE username = ?",
                 (new_password, username),
             )
-
             conn.commit()
 
         return True
-
-    # =====================================================
-    # UPDATE USER
-    # =====================================================
 
     def update_user(
         self,
@@ -437,13 +401,8 @@ class UserRepository:
                     cursor.execute(
                         """
                         UPDATE users
-                        SET
-                            username = ?,
-                            fullName = ?,
-                            email = ?,
-                            bio = ?,
-                            profile_photo = ?
-                        WHERE username = ?
+                        SET username=?, fullName=?, email=?, bio=?, profile_photo=?
+                        WHERE username=?
                         """,
                         (
                             new_username,
@@ -454,17 +413,12 @@ class UserRepository:
                             current_username,
                         ),
                     )
-
                 else:
                     cursor.execute(
                         """
                         UPDATE users
-                        SET
-                            username = ?,
-                            fullName = ?,
-                            email = ?,
-                            bio = ?
-                        WHERE username = ?
+                        SET username=?, fullName=?, email=?, bio=?
+                        WHERE username=?
                         """,
                         (
                             new_username,
@@ -482,31 +436,16 @@ class UserRepository:
         except Exception as e:
             return False, f"Error: {e}"
 
-    # =====================================================
-    # RESET TOKEN METHODS
-    # =====================================================
-
     def find_user_by_reset_token(self, token: str):
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    username,
-                    password,
-                    fullName,
-                    email,
-                    bio,
-                    account_type,
-                    organization_name,
-                    career_center_role,
-                    profile_photo,
-                    failed_attempts,
-                    lockout_until,
-                    reset_token,
-                    reset_token_expiry
+                SELECT id, username, password, fullName, email,
+                       bio, account_type, organization_name,
+                       career_center_role, profile_photo,
+                       failed_attempts, lockout_until,
+                       reset_token, reset_token_expiry
                 FROM users
                 WHERE reset_token = ?
                 """,
@@ -514,196 +453,91 @@ class UserRepository:
             )
 
             row = cursor.fetchone()
+            if not row:
+                return None
 
-            if row:
-                return {
-                    "id": row[0],
-                    "username": row[1],
-                    "password": row[2],
-                    "fullName": row[3],
-                    "email": row[4],
-                    "bio": row[5],
-                    "account_type": row[6],
-                    "organization_name": row[7],
-                    "career_center_role": row[8],
-                    "profile_photo": row[9],
-                    "failed_attempts": row[10],
-                    "lockout_until": row[11],
-                    "reset_token": row[12],
-                    "reset_token_expiry": row[13],
-                }
+            return {
+                "id": row[0],
+                "username": row[1],
+                "password": row[2],
+                "fullName": row[3],
+                "email": row[4],
+                "bio": row[5],
+                "account_type": row[6],
+                "organization_name": row[7],
+                "career_center_role": row[8],
+                "profile_photo": row[9],
+                "failed_attempts": row[10],
+                "lockout_until": row[11],
+                "reset_token": row[12],
+                "reset_token_expiry": row[13],
+            }
 
-            return None
-
-    def update_failed_attempts(
-        self,
-        user_id: int,
-        failed_attempts: int,
-        lockout_until: str = None,
-    ):
+    def update_failed_attempts(self, user_id: int, failed_attempts: int, lockout_until: str = None):
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
                 UPDATE users
-                SET failed_attempts = ?, lockout_until = ?
-                WHERE id = ?
+                SET failed_attempts=?, lockout_until=?
+                WHERE id=?
                 """,
-                (
-                    failed_attempts,
-                    lockout_until,
-                    user_id,
-                ),
+                (failed_attempts, lockout_until, user_id),
             )
-
             conn.commit()
 
     def clear_failed_attempts(self, user_id: int):
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
                 UPDATE users
-                SET
-                    failed_attempts = 0,
-                    lockout_until = NULL
-                WHERE id = ?
+                SET failed_attempts=0, lockout_until=NULL
+                WHERE id=?
                 """,
                 (user_id,),
             )
-
             conn.commit()
 
-    def set_reset_token(
-        self,
-        user_id: int,
-        token: str,
-        expiry: str,
-    ):
+    def set_reset_token(self, user_id: int, token: str, expiry: str):
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
                 UPDATE users
-                SET
-                    reset_token = ?,
-                    reset_token_expiry = ?
-                WHERE id = ?
+                SET reset_token=?, reset_token_expiry=?
+                WHERE id=?
                 """,
-                (
-                    token,
-                    expiry,
-                    user_id,
-                ),
+                (token, expiry, user_id),
             )
-
             conn.commit()
 
     def clear_reset_token(self, user_id: int):
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
                 UPDATE users
-                SET
-                    reset_token = NULL,
-                    reset_token_expiry = NULL,
-                    failed_attempts = 0,
-                    lockout_until = NULL
-                WHERE id = ?
+                SET reset_token=NULL, reset_token_expiry=NULL,
+                    failed_attempts=0, lockout_until=NULL
+                WHERE id=?
                 """,
                 (user_id,),
             )
-
             conn.commit()
-
-    # =====================================================
-    # DELETE USER
-    # =====================================================
 
     def delete_user(self, username):
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
-                """
-                DELETE FROM users
-                WHERE username = ?
-                """,
+                "DELETE FROM users WHERE username=?",
                 (username,),
             )
-
             conn.commit()
-
         return True
 
-
-# =========================================================
-# EVENT REPOSITORY
-# =========================================================
-
-
-class EventRepository:
-    def __init__(self, database_path: str):
-        self.database_path = database_path
-
-    def _connect(self):
-        conn = sqlite3.connect(self.database_path)
-        conn.execute("PRAGMA foreign_keys = ON")
-        return conn
-
     # =====================================================
-    # INITIALIZE TABLES
-    # =====================================================
-
-    def initialize(self):
-        with self._connect() as conn:
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS events (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    description TEXT NOT NULL,
-                    location TEXT NOT NULL,
-                    start_datetime TEXT NOT NULL,
-                    end_datetime TEXT NOT NULL,
-                    created_by_username TEXT NOT NULL,
-                    created_by_account_type TEXT NOT NULL,
-                    organization_name TEXT NOT NULL DEFAULT '',
-                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-                )
-                """
-            )
-
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS event_signups (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    event_id INTEGER NOT NULL,
-                    username TEXT NOT NULL,
-                    account_type TEXT NOT NULL,
-                    signed_up_at TEXT NOT NULL
-                        DEFAULT CURRENT_TIMESTAMP,
-
-                    FOREIGN KEY (event_id)
-                        REFERENCES events(id)
-                        ON DELETE CASCADE,
-
-                    UNIQUE(event_id, username)
-                )
-                """
-            )
-
-            conn.commit()
-
-    # =====================================================
-    # ADD EVENT
+    # EVENT METHODS
     # =====================================================
 
     def add_event(
@@ -719,25 +553,19 @@ class EventRepository:
     ):
         if not re.match(r"^.+$", title):
             return False, "Title is required."
-
         if not re.match(r"^.+$", description):
             return False, "Description is required."
-
         if not re.match(r"^.+$", location):
             return False, "Location is required."
 
         try:
             with self._connect() as conn:
                 cursor = conn.cursor()
-
                 cursor.execute(
                     """
                     INSERT INTO events (
-                        title,
-                        description,
-                        location,
-                        start_datetime,
-                        end_datetime,
+                        title, description, location,
+                        start_datetime, end_datetime,
                         created_by_username,
                         created_by_account_type,
                         organization_name
@@ -755,7 +583,6 @@ class EventRepository:
                         organization_name,
                     ),
                 )
-
                 conn.commit()
 
             return True, "Event created successfully."
@@ -763,199 +590,108 @@ class EventRepository:
         except Exception as e:
             return False, f"Error: {e}"
 
-    # =====================================================
-    # LIST ALL EVENTS
-    # =====================================================
-
-    def list_all_events(self):
+    def list_all_events(self) -> List[Event]:
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    title,
-                    description,
-                    location,
-                    start_datetime,
-                    end_datetime,
-                    created_by_username,
-                    created_by_account_type,
-                    organization_name
+                SELECT id, title, description, location,
+                       start_datetime, end_datetime,
+                       created_by_username,
+                       created_by_account_type,
+                       organization_name
                 FROM events
                 ORDER BY start_datetime ASC
                 """
             )
+            return [Event(*row) for row in cursor.fetchall()]
 
-            rows = cursor.fetchall()
-
-            return [Event(*row) for row in rows]
-
-    # =====================================================
-    # LIST EVENTS BY CREATOR
-    # =====================================================
-
-    def list_events_by_creator(self, username):
+    def list_events_by_creator(self, username) -> List[Event]:
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    title,
-                    description,
-                    location,
-                    start_datetime,
-                    end_datetime,
-                    created_by_username,
-                    created_by_account_type,
-                    organization_name
+                SELECT id, title, description, location,
+                       start_datetime, end_datetime,
+                       created_by_username,
+                       created_by_account_type,
+                       organization_name
                 FROM events
-                WHERE created_by_username = ?
+                WHERE created_by_username=?
                 ORDER BY start_datetime ASC
                 """,
                 (username,),
             )
+            return [Event(*row) for row in cursor.fetchall()]
 
-            rows = cursor.fetchall()
-
-            return [Event(*row) for row in rows]
-
-    # =====================================================
-    # LIST EVENTS BY ORGANIZATION
-    # =====================================================
-
-    def list_events_by_organization(self, organization_name):
+    def list_events_by_organization(self, organization_name) -> List[Event]:
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    title,
-                    description,
-                    location,
-                    start_datetime,
-                    end_datetime,
-                    created_by_username,
-                    created_by_account_type,
-                    organization_name
+                SELECT id, title, description, location,
+                       start_datetime, end_datetime,
+                       created_by_username,
+                       created_by_account_type,
+                       organization_name
                 FROM events
-                WHERE organization_name = ?
+                WHERE organization_name=?
                 ORDER BY start_datetime ASC
                 """,
                 (organization_name,),
             )
+            return [Event(*row) for row in cursor.fetchall()]
 
-            rows = cursor.fetchall()
-
-            return [Event(*row) for row in rows]
-
-    # =====================================================
-    # FIND EVENT BY ID
-    # =====================================================
-
-    def find_event_by_id(self, event_id):
+    def find_event_by_id(self, event_id) -> Optional[Event]:
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    id,
-                    title,
-                    description,
-                    location,
-                    start_datetime,
-                    end_datetime,
-                    created_by_username,
-                    created_by_account_type,
-                    organization_name
+                SELECT id, title, description, location,
+                       start_datetime, end_datetime,
+                       created_by_username,
+                       created_by_account_type,
+                       organization_name
                 FROM events
-                WHERE id = ?
+                WHERE id=?
                 """,
                 (event_id,),
             )
-
             row = cursor.fetchone()
+            return Event(*row) if row else None
 
-            if row:
-                return Event(*row)
-
-            return None
-
-    # =====================================================
-    # SIGN UP USER FOR EVENT
-    # =====================================================
-
-    def signup_for_event(
-        self,
-        event_id,
-        username,
-        account_type,
-    ):
+    def signup_for_event(self, event_id, username, account_type):
         try:
             with self._connect() as conn:
                 cursor = conn.cursor()
 
-                cursor.execute(
-                    """
-                    SELECT id
-                    FROM events
-                    WHERE id = ?
-                    """,
-                    (event_id,),
-                )
-
+                cursor.execute("SELECT id FROM events WHERE id=?", (event_id,))
                 if not cursor.fetchone():
                     return False, "Event does not exist."
 
                 cursor.execute(
                     """
-                    SELECT id
-                    FROM event_signups
-                    WHERE
-                        event_id = ?
-                        AND username = ?
+                    SELECT id FROM event_signups
+                    WHERE event_id=? AND username=?
                     """,
-                    (
-                        event_id,
-                        username,
-                    ),
+                    (event_id, username),
                 )
-
                 if cursor.fetchone():
                     return False, "User already signed up."
 
                 cursor.execute(
                     """
-                    INSERT INTO event_signups (
-                        event_id,
-                        username,
-                        account_type
-                    )
+                    INSERT INTO event_signups (event_id, username, account_type)
                     VALUES (?, ?, ?)
                     """,
-                    (
-                        event_id,
-                        username,
-                        account_type,
-                    ),
+                    (event_id, username, account_type),
                 )
 
                 conn.commit()
-
                 return True, "Signup successful."
 
         except Exception as e:
             return False, f"Error: {e}"
-
-    # =====================================================
-    # DELETE EVENT SIGNUP
-    # =====================================================
 
     def delete_event_signup(self, event_id, username):
         try:
@@ -963,96 +699,51 @@ class EventRepository:
                 cursor = conn.cursor()
 
                 cursor.execute(
-                    """
-                    SELECT id
-                    FROM event_signups
-                    WHERE
-                        event_id = ?
-                        AND username = ?
-                    """,
-                    (
-                        event_id,
-                        username,
-                    ),
+                    "SELECT id FROM event_signups WHERE event_id=? AND username=?",
+                    (event_id, username),
                 )
-
-                signup = cursor.fetchone()
-
-                if not signup:
+                if not cursor.fetchone():
                     return False, "Signup does not exist."
 
                 cursor.execute(
-                    """
-                    DELETE FROM event_signups
-                    WHERE
-                        event_id = ?
-                        AND username = ?
-                    """,
-                    (
-                        event_id,
-                        username,
-                    ),
+                    "DELETE FROM event_signups WHERE event_id=? AND username=?",
+                    (event_id, username),
                 )
 
                 conn.commit()
-
                 return True, "Signup deleted successfully."
 
         except Exception as e:
             return False, f"Error: {e}"
 
-    # =====================================================
-    # LIST ATTENDEES FOR EVENT
-    # =====================================================
-
     def list_event_attendees(self, event_id):
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    username,
-                    account_type,
-                    signed_up_at
+                SELECT username, account_type, signed_up_at
                 FROM event_signups
-                WHERE event_id = ?
+                WHERE event_id=?
                 ORDER BY signed_up_at ASC
-                """,
-                (event_id,),
-            )
-
+                """
+            , (event_id,))
             return cursor.fetchall()
 
-    # =====================================================
-    # LIST EVENTS USER SIGNED UP FOR
-    # =====================================================
-
-    def list_user_signed_up_events(self, username):
+    def list_user_signed_up_events(self, username) -> List[Event]:
         with self._connect() as conn:
             cursor = conn.cursor()
-
             cursor.execute(
                 """
-                SELECT
-                    e.id,
-                    e.title,
-                    e.description,
-                    e.location,
-                    e.start_datetime,
-                    e.end_datetime,
-                    e.created_by_username,
-                    e.created_by_account_type,
-                    e.organization_name
+                SELECT e.id, e.title, e.description, e.location,
+                       e.start_datetime, e.end_datetime,
+                       e.created_by_username,
+                       e.created_by_account_type,
+                       e.organization_name
                 FROM events e
-                INNER JOIN event_signups es
-                    ON e.id = es.event_id
-                WHERE es.username = ?
+                INNER JOIN event_signups es ON e.id = es.event_id
+                WHERE es.username=?
                 ORDER BY e.start_datetime ASC
                 """,
                 (username,),
             )
-
-            rows = cursor.fetchall()
-
-            return [Event(*row) for row in rows]
+            return [Event(*row) for row in cursor.fetchall()]
