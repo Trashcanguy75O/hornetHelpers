@@ -994,6 +994,54 @@ def find_event_by_id(self, event_id):
         except Exception as e:
             return False, f"Error: {e}"
 
+
+# =====================================================
+# DELETE EVENT SIGNUP
+# =====================================================
+
+def delete_event_signup(self, event_id, username):
+
+    try:
+
+        with self._connect() as conn:
+
+            cursor = conn.cursor()
+
+            # Check if signup exists
+            cursor.execute("""
+                SELECT id
+                FROM event_signups
+                WHERE
+                    event_id = ?
+                    AND username = ?
+            """, (
+                event_id,
+                username
+            ))
+
+            signup = cursor.fetchone()
+
+            if not signup:
+                return False, "Signup does not exist."
+
+            # Delete signup
+            cursor.execute("""
+                DELETE FROM event_signups
+                WHERE
+                    event_id = ?
+                    AND username = ?
+            """, (
+                event_id,
+                username
+            ))
+
+            conn.commit()
+
+            return True, "Signup deleted successfully."
+
+    except Exception as e:
+
+        return False, f"Error: {e}"
     # =====================================================
     # LIST ATTENDEES FOR EVENT
     # =====================================================
