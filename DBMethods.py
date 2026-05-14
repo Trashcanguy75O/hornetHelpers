@@ -834,6 +834,103 @@ def list_all_events(self):
         rows = cursor.fetchall()
 
         return [Event(*row) for row in rows]
+
+
+
+    # =====================================================
+# LIST EVENTS BY CREATOR
+# =====================================================
+
+def list_events_by_creator(self, username):
+
+    with self._connect() as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                id,
+                title,
+                description,
+                location,
+                start_datetime,
+                end_datetime,
+                created_by_username,
+                created_by_account_type,
+                organization_name
+            FROM events
+            WHERE created_by_username = ?
+            ORDER BY start_datetime ASC
+        """, (username,))
+
+        rows = cursor.fetchall()
+
+        return [Event(*row) for row in rows]
+
+
+# =====================================================
+# LIST EVENTS BY ORGANIZATION
+# =====================================================
+
+def list_events_by_organization(self, organization_name):
+
+    with self._connect() as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                id,
+                title,
+                description,
+                location,
+                start_datetime,
+                end_datetime,
+                created_by_username,
+                created_by_account_type,
+                organization_name
+            FROM events
+            WHERE organization_name = ?
+            ORDER BY start_datetime ASC
+        """, (organization_name,))
+
+        rows = cursor.fetchall()
+
+        return [Event(*row) for row in rows]
+
+
+# =====================================================
+# FIND EVENT BY ID
+# =====================================================
+
+def find_event_by_id(self, event_id):
+
+    with self._connect() as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                id,
+                title,
+                description,
+                location,
+                start_datetime,
+                end_datetime,
+                created_by_username,
+                created_by_account_type,
+                organization_name
+            FROM events
+            WHERE id = ?
+        """, (event_id,))
+
+        row = cursor.fetchone()
+
+        if row:
+
+            return Event(*row)
+
+        return None
     
     # =====================================================
     # SIGN UP USER FOR EVENT
