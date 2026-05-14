@@ -443,6 +443,7 @@ body {
 }
 
 @media (max-width: 980px) {
+
     .figma-shell {
         flex-direction: column;
     }
@@ -478,6 +479,10 @@ body {
         white-space: normal;
         padding: 18px 20px;
         font-size: 28px;
+    }
+
+    .event-details-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -653,4 +658,69 @@ body {
 
 .new-event-page h1 {
     margin-top: 0;
+}
+
+.event-details-page {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    align-items: center;
+}
+
+.event-details-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 42px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.event-details-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+    align-items: start;
+}
+
+.event-detail-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.event-detail-card label {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.event-detail-value {
+    width: 100%;
+    min-height: 72px;
+    border-radius: 18px;
+    background: #f3f3f3;
+    color: #111111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 22px;
+    padding: 16px 18px;
+    line-height: 1.35;
+}
+
+.event-detail-description {
+    min-height: 180px;
+    text-align: left;
+    justify-content: flex-start;
+    align-items: flex-start;
+    white-space: pre-wrap;
+}
+
+.full-width {
+    grid-column: 1 / -1;
 }

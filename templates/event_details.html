@@ -1,0 +1,54 @@
+{% extends "app_base.html" %}
+
+{% block title %}Event Details - Hornet Helpers{% endblock %}
+
+{% block content %}
+<div class="account-figma-page">
+    <section class="profile-hero">
+        <div class="event-details-page">
+            <h1 class="event-details-title">{{ event.title }}</h1>
+
+            <div class="event-details-grid">
+                <div class="event-detail-card full-width">
+                    <label>Description</label>
+                    <div class="event-detail-value event-detail-description">
+                        {{ event.description }}
+                    </div>
+                </div>
+
+                <div class="event-detail-card">
+                    <label>Location</label>
+                    <div class="event-detail-value">{{ event.location }}</div>
+                </div>
+
+                <div class="event-detail-card">
+                    <label>Created By</label>
+                    <div class="event-detail-value">{{ event.created_by_username }}</div>
+                </div>
+
+                <div class="event-detail-card">
+                    <label>Creator Type</label>
+                    <div class="event-detail-value">{{ event.created_by_account_type }}</div>
+                </div>
+
+                <div class="event-detail-card">
+                    <label>Start</label>
+                    <div class="event-detail-value">{{ event.start_datetime }}</div>
+                </div>
+
+                <div class="event-detail-card">
+                    <label>End</label>
+                    <div class="event-detail-value">{{ event.end_datetime }}</div>
+                </div>
+
+                {% if event.organization_name %}
+                <div class="event-detail-card full-width">
+                    <label>Organization</label>
+                    <div class="event-detail-value">{{ event.organization_name }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

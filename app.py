@@ -198,6 +198,27 @@ def my_events():
 
     return render_template("my_events.html", user=user, events=events)
 
+@app.route("/events/<int:event_id>")
+def event_details(event_id):
+    username = get_current_username()
+
+    if not username:
+        return redirect(url_for("acc_login"))
+
+    user = user_repo.find_user(username)
+    event = event_repo.find_event_by_id(event_id)
+
+    if not event:
+        flash("Event not found.")
+
+        if user.account_type == "Admin":
+            return redirect(url_for("admin_home"))
+        elif user.account_type == "Organizer":
+            return redirect(url_for("organizer_home"))
+        else:
+            return redirect(url_for("volunteer_home"))
+
+    return render_template("event_details.html", user=user, event=event)
 
 @app.route("/acc_login", methods=["GET", "POST"])
 def acc_login():
