@@ -636,9 +636,11 @@ class UserRepository:
         return True
 
 
-# =========================================================
-# EVENT REPOSITORY
-# =========================================================
+import sqlite3
+import re
+
+from datetime import datetime
+
 
 class EventRepository:
 
@@ -646,10 +648,16 @@ class EventRepository:
         self.database_path = database_path
 
     def _connect(self):
-        return sqlite3.connect(self.database_path)
+
+        conn = sqlite3.connect(self.database_path)
+
+        # Enable foreign keys in SQLite
+        conn.execute("PRAGMA foreign_keys = ON")
+
+        return conn
 
     # =====================================================
-    # INITIALIZE EVENTS TABLE
+    # INITIALIZE TABLES
     # =====================================================
 
     def initialize(self):
@@ -657,6 +665,10 @@ class EventRepository:
         with self._connect() as conn:
 
             cursor = conn.cursor()
+
+            # -----------------------------
+            # EVENTS TABLE
+            # -----------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS events (
@@ -670,6 +682,30 @@ class EventRepository:
                     created_by_account_type TEXT NOT NULL,
                     organization_name TEXT NOT NULL DEFAULT '',
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # -----------------------------
+            # EVENT SIGNUPS TABLE
+            # -----------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS event_signups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                    event_id INTEGER NOT NULL,
+
+                    username TEXT NOT NULL,
+                    account_type TEXT NOT NULL,
+
+                    signed_up_at TEXT NOT NULL
+                        DEFAULT CURRENT_TIMESTAMP,
+
+                    FOREIGN KEY (event_id)
+                        REFERENCES events(id)
+                        ON DELETE CASCADE,
+
+                    UNIQUE(event_id, username)
                 )
             """)
 
@@ -771,12 +807,72 @@ class EventRepository:
             return False, f"Error: {e}"
 
     # =====================================================
-    # LIST UPCOMING EVENTS
+    # SIGN UP USER FOR EVENT
     # =====================================================
 
-    def list_upcoming_events(self):
+    def signup_for_event(
+        self,
+        event_id,
+        username,
+        account_type
+    ):
 
-        now = datetime.now().isoformat(timespec='minutes')
+        try:
+
+            with self._connect() as conn:
+
+                cursor = conn.cursor()
+
+                # Ensure event exists
+                cursor.execute("""
+                    SELECT id
+                    FROM events
+                    WHERE id = ?
+                """, (event_id,))
+
+                if not cursor.fetchone():
+                    return False, "Event does not exist."
+
+                # Prevent duplicate signups
+                cursor.execute("""
+                    SELECT id
+                    FROM event_signups
+                    WHERE
+                        event_id = ?
+                        AND username = ?
+                """, (
+                    event_id,
+                    username
+                ))
+
+                if cursor.fetchone():
+                    return False, "User already signed up."
+
+                cursor.execute("""
+                    INSERT INTO event_signups (
+                        event_id,
+                        username,
+                        account_type
+                    )
+                    VALUES (?, ?, ?)
+                """, (
+                    event_id,
+                    username,
+                    account_type
+                ))
+
+                conn.commit()
+
+                return True, "Signup successful."
+
+        except Exception as e:
+            return False, f"Error: {e}"
+
+    # =====================================================
+    # LIST ATTENDEES FOR EVENT
+    # =====================================================
+
+    def list_event_attendees(self, event_id):
 
         with self._connect() as conn:
 
@@ -784,29 +880,21 @@ class EventRepository:
 
             cursor.execute("""
                 SELECT
-                    id,
-                    title,
-                    description,
-                    location,
-                    start_datetime,
-                    end_datetime,
-                    created_by_username,
-                    created_by_account_type,
-                    organization_name
-                FROM events
-                WHERE start_datetime >= ?
-                ORDER BY start_datetime ASC
-            """, (now,))
+                    username,
+                    account_type,
+                    signed_up_at
+                FROM event_signups
+                WHERE event_id = ?
+                ORDER BY signed_up_at ASC
+            """, (event_id,))
 
-            rows = cursor.fetchall()
-
-            return [Event(*row) for row in rows]
+            return cursor.fetchall()
 
     # =====================================================
-    # LIST EVENTS BY CREATOR
+    # LIST EVENTS USER SIGNED UP FOR
     # =====================================================
 
-    def list_events_by_creator(self, username):
+    def list_user_signed_up_events(self, username):
 
         with self._connect() as conn:
 
@@ -814,49 +902,21 @@ class EventRepository:
 
             cursor.execute("""
                 SELECT
-                    id,
-                    title,
-                    description,
-                    location,
-                    start_datetime,
-                    end_datetime,
-                    created_by_username,
-                    created_by_account_type,
-                    organization_name
-                FROM events
-                WHERE created_by_username = ?
-                ORDER BY start_datetime ASC
+                    e.id,
+                    e.title,
+                    e.description,
+                    e.location,
+                    e.start_datetime,
+                    e.end_datetime,
+                    e.created_by_username,
+                    e.created_by_account_type,
+                    e.organization_name
+                FROM events e
+                INNER JOIN event_signups es
+                    ON e.id = es.event_id
+                WHERE es.username = ?
+                ORDER BY e.start_datetime ASC
             """, (username,))
-
-            rows = cursor.fetchall()
-
-            return [Event(*row) for row in rows]
-
-    # =====================================================
-    # LIST EVENTS BY ORGANIZATION
-    # =====================================================
-
-    def list_events_by_organization(self, organization_name):
-
-        with self._connect() as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute("""
-                SELECT
-                    id,
-                    title,
-                    description,
-                    location,
-                    start_datetime,
-                    end_datetime,
-                    created_by_username,
-                    created_by_account_type,
-                    organization_name
-                FROM events
-                WHERE organization_name = ?
-                ORDER BY start_datetime ASC
-            """, (organization_name,))
 
             rows = cursor.fetchall()
 
