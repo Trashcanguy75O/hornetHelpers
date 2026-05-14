@@ -806,6 +806,35 @@ class EventRepository:
         except Exception as e:
             return False, f"Error: {e}"
 
+# =====================================================
+# LIST ALL EVENTS
+# =====================================================
+
+def list_all_events(self):
+
+    with self._connect() as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                id,
+                title,
+                description,
+                location,
+                start_datetime,
+                end_datetime,
+                created_by_username,
+                created_by_account_type,
+                organization_name
+            FROM events
+            ORDER BY start_datetime ASC
+        """)
+
+        rows = cursor.fetchall()
+
+        return [Event(*row) for row in rows]
+    
     # =====================================================
     # SIGN UP USER FOR EVENT
     # =====================================================
