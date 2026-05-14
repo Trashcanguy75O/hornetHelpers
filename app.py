@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, session
-from DBMethods import UserRepository, EventRepository
+from DBMethods import Database
 import bcrypt
 import secrets
 from datetime import datetime, timedelta
@@ -17,9 +17,11 @@ app = Flask(__name__)
 SECRET_KEY = os.getenv("SECRET_KEY")
 app.secret_key = SECRET_KEY
 
-# Separate repositories
-user_repo = UserRepository("hornethelpers.db")
-event_repo = EventRepository("hornethelpers.db")
+# =====================================================
+# SINGLE DATABASE INSTANCE
+# =====================================================
+
+db = Database("hornethelpers.db")
 
 UPLOAD_FOLDER = Path("static/uploads/profile_photos")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
@@ -61,7 +63,7 @@ def volunteer_home():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
+    user = db.find_user(username)
     return render_template("volunteer_home.html", user=user)
 
 
@@ -71,7 +73,7 @@ def organizer_home():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
+    user = db.find_user(username)
     return render_template("organizer_home.html", user=user)
 
 
@@ -81,7 +83,7 @@ def admin_home():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
+    user = db.find_user(username)
     return render_template("admin_home.html", user=user)
 
 
@@ -92,7 +94,7 @@ def new_event():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
+    user = db.find_user(username)
 
     if user.account_type not in {"Organizer", "Admin"}:
         flash("Only organizers and admins can create events.")
@@ -136,7 +138,7 @@ def new_event():
             else ""
         )
 
-        success, message = event_repo.add_event(
+        success, message = db.add_event(
             title,
             description,
             location,
@@ -147,15 +149,13 @@ def new_event():
             organization_name
         )
 
-        if success:
-            flash(message)
+        flash(message)
 
+        if success:
             if user.account_type == "Admin":
                 return redirect(url_for("admin_home"))
-
             return redirect(url_for("organizer_home"))
 
-        flash(message)
         return redirect(url_for("new_event"))
 
     return render_template("new_event.html", user=user)
@@ -168,8 +168,10 @@ def all_events():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
-    events = event_repo.list_upcoming_events()
+    user = db.find_user(username)
+
+    # FIX: replaced missing list_upcoming_events()
+    events = db.list_all_events()
 
     return render_template("all_events.html", user=user, events=events)
 
@@ -181,17 +183,13 @@ def my_events():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
+    user = db.find_user(username)
 
     if user.account_type == "Organizer":
-        events = event_repo.list_events_by_organization(
-            user.organization_name
-        )
+        events = db.list_events_by_organization(user.organization_name)
 
     elif user.account_type == "Admin":
-        events = event_repo.list_events_by_creator(
-            user.username
-        )
+        events = db.list_events_by_creator(user.username)
 
     else:
         events = []
@@ -205,7 +203,7 @@ def acc_login():
         username = request.form["user"].strip()
         password = request.form["password"].strip()
 
-        user = user_repo.find_user(username)
+        user = db.find_user(username)
 
         if not user:
             flash("Invalid username or password.")
@@ -222,18 +220,15 @@ def acc_login():
             password.encode("utf-8"),
             user.password.encode("utf-8")
         ):
-
-            user_repo.clear_failed_attempts(user.id)
+            db.clear_failed_attempts(user.id)
 
             session["user_id"] = user.id
             session["username"] = user.username
 
             if user.account_type == "Admin":
                 return redirect(url_for("admin_home"))
-
             elif user.account_type == "Organizer":
                 return redirect(url_for("organizer_home"))
-
             else:
                 return redirect(url_for("volunteer_home"))
 
@@ -243,20 +238,15 @@ def acc_login():
             if failed_attempts >= 5:
                 lockout_time = datetime.now() + timedelta(minutes=15)
 
-                user_repo.update_failed_attempts(
+                db.update_failed_attempts(
                     user.id,
                     failed_attempts,
                     lockout_time.isoformat()
                 )
 
                 flash("Too many failed attempts. Account is locked for 15 minutes.")
-
             else:
-                user_repo.update_failed_attempts(
-                    user.id,
-                    failed_attempts
-                )
-
+                db.update_failed_attempts(user.id, failed_attempts)
                 flash("Incorrect username or password. Please try again.")
 
             return redirect(url_for("acc_login"))
@@ -273,10 +263,7 @@ def new_account():
         password = request.form["password"].strip()
         confirm_password = request.form["confirm_password"].strip()
 
-        account_type = request.form.get(
-            "account_type",
-            "Volunteer"
-        ).strip()
+        account_type = request.form.get("account_type", "Volunteer").strip()
 
         organization_name = ""
         career_center_role = ""
@@ -297,20 +284,13 @@ def new_account():
             flash("Please select a valid account type.")
             return redirect(url_for("new_account"))
 
-        if user_repo.find_user(username) or user_repo.find_by_email(email):
+        if db.find_user(username) or db.find_by_email(email):
             flash("Username or Email already exists.")
             return redirect(url_for("new_account"))
 
         if account_type == "Organizer":
-            organization_name = request.form.get(
-                "organization_name",
-                ""
-            ).strip()
-
-            organizer_pin = request.form.get(
-                "organizer_pin",
-                ""
-            ).strip()
+            organization_name = request.form.get("organization_name", "").strip()
+            organizer_pin = request.form.get("organizer_pin", "").strip()
 
             if not organization_name:
                 flash("Organization name is required for organizer registration.")
@@ -321,15 +301,8 @@ def new_account():
                 return redirect(url_for("new_account"))
 
         if account_type == "Admin":
-            career_center_role = request.form.get(
-                "career_center_role",
-                ""
-            ).strip()
-
-            admin_pin = request.form.get(
-                "admin_pin",
-                ""
-            ).strip()
+            career_center_role = request.form.get("career_center_role", "").strip()
+            admin_pin = request.form.get("admin_pin", "").strip()
 
             if not career_center_role:
                 flash("Career center role is required for admin registration.")
@@ -344,7 +317,7 @@ def new_account():
             bcrypt.gensalt()
         ).decode("utf-8")
 
-        result_message = user_repo.add_user(
+        result_message = db.add_user(
             username,
             hashed_password,
             full_name,
@@ -355,7 +328,7 @@ def new_account():
         )
 
         if result_message == "User Added.":
-            created_user = user_repo.find_user(username)
+            created_user = db.find_user(username)
 
             if created_user:
                 session["user_id"] = created_user.id
@@ -365,10 +338,8 @@ def new_account():
 
             if account_type == "Admin":
                 return redirect(url_for("admin_home"))
-
             if account_type == "Organizer":
                 return redirect(url_for("organizer_home"))
-
             return redirect(url_for("volunteer_home"))
 
         flash(f"Error: {result_message}")
@@ -381,8 +352,8 @@ def new_account():
 def logout():
     session.pop("user_id", None)
     session.pop("username", None)
-
     return redirect(url_for("acc_login"))
+
 
 @app.route("/dashboard")
 def dashboard():
@@ -391,7 +362,7 @@ def dashboard():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
+    user = db.find_user(username)
 
     if not user:
         return redirect(url_for("acc_login"))
@@ -403,6 +374,7 @@ def dashboard():
     else:
         return redirect(url_for("volunteer_home"))
 
+
 @app.route("/forgot_username", methods=["GET", "POST"])
 def forgot_username():
     if request.method == "POST":
@@ -412,7 +384,7 @@ def forgot_username():
             flash("invalid email entered.")
             return redirect(url_for("forgot_username"))
 
-        user = user_repo.find_by_email(email)
+        user = db.find_by_email(email)
 
         if user:
             send_username_email(email, user.username)
@@ -434,13 +406,13 @@ def forgot_password():
             flash("invalid email entered.")
             return redirect(url_for("forgot_password"))
 
-        user = user_repo.find_by_email(email)
+        user = db.find_by_email(email)
 
         if user:
             reset_token = secrets.token_urlsafe(32)
             reset_token_expiry = datetime.now() + timedelta(hours=1)
 
-            user_repo.set_reset_token(
+            db.set_reset_token(
                 user.id,
                 reset_token,
                 reset_token_expiry.isoformat()
@@ -448,11 +420,7 @@ def forgot_password():
 
             send_recovery_email(email, reset_token)
 
-        flash(
-            "If an account exists, you should receive a "
-            "password reset link!"
-        )
-
+        flash("If an account exists, you should receive a password reset link!")
         return redirect(url_for("forgot_password"))
 
     return render_template("forgot_password.html")
@@ -460,14 +428,12 @@ def forgot_password():
 
 @app.route("/reset_password/<token>", methods=["GET", "POST"])
 def reset_password(token):
-    user = user_repo.find_user_by_reset_token(token)
+    user = db.find_user_by_reset_token(token)
 
     if (
         not user
         or not user["reset_token_expiry"]
-        or datetime.fromisoformat(
-            user["reset_token_expiry"]
-        ) < datetime.now()
+        or datetime.fromisoformat(user["reset_token_expiry"]) < datetime.now()
     ):
         flash("Invalid or expired reset link.")
         return redirect(url_for("forgot_password"))
@@ -481,29 +447,18 @@ def reset_password(token):
             return redirect(url_for("reset_password", token=token))
 
         if not is_valid_password(new_password):
-            flash(
-                "Password must be at least 8 characters "
-                "long and must contain at least 1 letter and number."
-            )
-
+            flash("Password must be at least 8 characters long and include a letter and number.")
             return redirect(url_for("reset_password", token=token))
 
         hashed_password = generate_hashed_password(new_password)
 
-        user_repo.change_password(
-            user["username"],
-            hashed_password
-        )
-
-        user_repo.clear_reset_token(user["id"])
+        db.change_password(user["username"], hashed_password)
+        db.clear_reset_token(user["id"])
 
         flash("Password reset successfully.")
         return redirect(url_for("acc_login"))
 
-    return render_template(
-        "reset_password.html",
-        token=token
-    )
+    return render_template("reset_password.html", token=token)
 
 
 @app.route("/account")
@@ -513,8 +468,7 @@ def account():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
-
+    user = db.find_user(username)
     return render_template("account.html", user=user)
 
 
@@ -525,8 +479,7 @@ def account_edit():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
-
+    user = db.find_user(username)
     return render_template("account_edit.html", user=user)
 
 
@@ -537,8 +490,7 @@ def account_password():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
-
+    user = db.find_user(username)
     return render_template("account_password.html", user=user)
 
 
@@ -549,10 +501,7 @@ def update_account_password():
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
-
-    if not user:
-        return redirect(url_for("acc_login"))
+    user = db.find_user(username)
 
     current_password = request.form["current_password"].strip()
     new_password = request.form["new_password"].strip()
@@ -562,7 +511,6 @@ def update_account_password():
         current_password.encode("utf-8"),
         user.password.encode("utf-8")
     ):
-
         return render_template(
             "account_password.html",
             user=user,
@@ -582,16 +530,12 @@ def update_account_password():
         return render_template(
             "account_password.html",
             user=user,
-            message=(
-                "Password must be at least 8 characters "
-                "long and contain at least 1 letter and 1 number."
-            ),
+            message="Password must be at least 8 characters long and contain a letter and number.",
             success=False
         )
 
     hashed_password = generate_hashed_password(new_password)
-
-    user_repo.change_password(username, hashed_password)
+    db.change_password(username, hashed_password)
 
     return render_template(
         "account_password.html",
@@ -608,10 +552,7 @@ def update_account():
     if not current_username:
         return redirect(url_for("acc_login"))
 
-    current_user = user_repo.find_user(current_username)
-
-    if not current_user:
-        return redirect(url_for("acc_login"))
+    current_user = db.find_user(current_username)
 
     new_username = request.form["username"].strip()
     full_name = request.form["full_name"].strip()
@@ -623,32 +564,21 @@ def update_account():
 
     if photo and photo.filename:
         if not allowed_file(photo.filename):
-            user = user_repo.find_user(current_username)
-
             return render_template(
                 "account_edit.html",
-                user=user,
-                message=(
-                    "Invalid file type. Please upload a "
-                    "PNG, JPG, or JPEG image."
-                ),
+                user=current_user,
+                message="Invalid file type. Please upload PNG, JPG, or JPEG.",
                 success=False
             )
 
         extension = photo.filename.rsplit(".", 1)[1].lower()
-
-        filename = secure_filename(
-            f"user_{current_user.id}.{extension}"
-        )
-
+        filename = secure_filename(f"user_{current_user.id}.{extension}")
         save_path = UPLOAD_FOLDER / filename
         photo.save(save_path)
 
-        profile_photo_path = (
-            f"uploads/profile_photos/{filename}"
-        )
+        profile_photo_path = f"uploads/profile_photos/{filename}"
 
-    success, message = user_repo.update_user(
+    success, message = db.update_user(
         current_username,
         new_username,
         full_name,
@@ -661,19 +591,16 @@ def update_account():
         session["username"] = new_username
         return redirect(url_for("account"))
 
-    user = user_repo.find_user(current_username)
-
     return render_template(
         "account_edit.html",
-        user=user,
+        user=current_user,
         message=message,
         success=success
     )
 
 
 if __name__ == "__main__":
-    user_repo.initialize()
-    event_repo.initialize()
+    db.initialize()
 
     if (
         not SECRET_KEY
@@ -681,9 +608,7 @@ if __name__ == "__main__":
         or not ORGANIZER_REGISTRATION_PIN
     ):
         raise ValueError(
-            "SECRET_KEY, ADMIN_REGISTRATION_PIN and "
-            "ORGANIZER_REGISTRATION_PIN must be set "
-            "in environment variables"
+            "SECRET_KEY, ADMIN_REGISTRATION_PIN and ORGANIZER_REGISTRATION_PIN must be set in environment variables"
         )
 
     app.run(debug=True)
