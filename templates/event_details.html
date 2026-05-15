@@ -45,7 +45,15 @@
                 <div class="event-detail-card">
                     <label>Join/Leave Event</label>
                     <button type="button" class="event-detail-btn">
-                        {{ event.end_datetime }}
+                        {%if user.account_type not in ["Organizer", "Admin"]%}
+                            {%if is_signed_up %}
+                                Unregister
+                            {%else%}
+                                Register
+                            {%endif%}
+                        {%else%}
+                        Ineligible
+                        {%endif%}
                     </button>
                 </div>
 

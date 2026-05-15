@@ -217,7 +217,10 @@ def event_details(event_id):
         else:
             return redirect(url_for("volunteer_home"))
 
-    return render_template("event_details.html", user=user, event=event)
+    user_events = db.list_user_signed_up_events(username)
+    is_signed_up = any(e.id == event_id for e in user_events)
+
+    return render_template("event_details.html", is_signed_up=is_signed_up, user=user, event=event)
 
 @app.route("/events/delete")
 def delete_events_page():
