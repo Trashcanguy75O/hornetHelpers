@@ -186,7 +186,7 @@ class Database:
                 )
                 """
             )
-
+            # EVENT SIGNUPS
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS event_signups (
@@ -589,6 +589,26 @@ class Database:
 
         except Exception as e:
             return False, f"Error: {e}"
+
+    def delete_event(self, event_id):
+        try:
+            cursor = self.connection.cursor()
+    
+            cursor.execute(
+                """
+                DELETE FROM events
+                WHERE id = ?
+                """,
+                (event_id,)
+            )
+    
+            self.connection.commit()
+            return cursor.rowcount > 0
+    
+        except Exception as e:
+            print(f"Error deleting event: {e}")
+            return False
+        
 
     def list_all_events(self) -> List[Event]:
         with self._connect() as conn:
