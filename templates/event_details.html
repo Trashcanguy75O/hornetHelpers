@@ -44,16 +44,23 @@
 
                 <div class="event-detail-card">
                     <label>Join/Leave Event</label>
-                    <button type="button" class="event-detail-btn">
-                        {%if user.account_type not in ["Organizer", "Admin"]%}
-                            {%if is_signed_up %}
-                                Unregister
-                            {%else%}
-                                Register
-                            {%endif%}
+                    {%if user.account_type not in ["Organizer", "Admin"]%}
+                        {%if is_signed_up %}
+                            <form action="{{ url_for('remove_from_event', event_id=event.id) }}" method="POST">
+                                <button type="submit" class="event-detail-btn unregister-style">
+                                    Unregister
+                                </button>
+                            </form>
                         {%else%}
-                        Ineligible
+                            <form action="{{ url_for('add_to_event', event_id=event.id) }}" method="POST">
+                                <button type="submit" class="event-detail-btn register-style">
+                                    Register
+                                </button>
+                            </form>
                         {%endif%}
+                    {%else%}
+                    Ineligible
+                    {%endif%}
                     </button>
                 </div>
 

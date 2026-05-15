@@ -704,6 +704,20 @@ def personal_calendar():
     data = get_personal_calendar_data(year, month, db, username)
 
     return render_template("personal_calendar.html", today=today, **data)
+    
+@app.route("/add_to_event/<int:event_id>", methods=["POST"])
+def add_to_event(event_id):
+    username = get_current_username()
+    user = db.find_user(username)
+    account_type = user.account_type
+    db.signup_for_event(event_id, username, account_type)
+    return redirect(url_for('event_details', event_id=event_id))
+
+@app.route("/remove_from_event/<int:event_id>", methods=["POST"])
+def remove_from_event(event_id):
+    username = get_current_username()
+    db.delete_event_signup(event_id, username)
+    return redirect(url_for('event_details', event_id=event_id))
 
 if __name__ == "__main__":
     if (
