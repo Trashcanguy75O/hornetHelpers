@@ -592,19 +592,20 @@ class Database:
 
     def delete_event(self, event_id):
         try:
-            cursor = self.connection.cursor()
-    
-            cursor.execute(
-                """
-                DELETE FROM events
-                WHERE id = ?
-                """,
-                (event_id,)
-            )
-    
-            self.connection.commit()
-            return cursor.rowcount > 0
-    
+            with self._connect() as conn:
+                cursor = conn.cursor()
+
+                cursor.execute(
+                    """
+                    DELETE FROM events
+                    WHERE id = ?
+                    """,
+                    (event_id,)
+                )
+
+                conn.commit()
+                return cursor.rowcount > 0
+
         except Exception as e:
             print(f"Error deleting event: {e}")
             return False
@@ -680,24 +681,6 @@ class Database:
                 (str(year), f"{month:02d}"),
             )
             return [Event(*row) for row in cursor.fetchall()]
-
-    def find_event_by_id(self, event_id) -> Optional[Event]:
-        with self._connect() as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT id, title, description, location,
-                       start_datetime, end_datetime,
-                       created_by_username,
-                       created_by_account_type,
-                       organization_name
-                FROM events
-                WHERE id=?
-                """,
-                (event_id,),
-            )
-            row = cursor.fetchone()
-            return Event(*row) if row else None
 
     def signup_for_event(self, event_id, username, account_type):
         try:

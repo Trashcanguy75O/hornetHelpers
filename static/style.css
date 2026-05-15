@@ -90,3 +90,60 @@ html, body {
     border-radius: 6px;
     display: inline-block;
 }
+
+.delete-event-list {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.delete-event-card {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+}
+
+.delete-event-card h3 {
+    margin: 0 0 8px 0;
+    color: white;
+}
+
+.delete-event-card p {
+    margin: 4px 0;
+    color: white;
+}
+
+.delete-event-card form {
+    margin: 0;
+}
+
+.delete-btn {
+    width: 100%;
+    border: none;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background: #e57373;
+    color: #111111;
+}
+
+.delete-event-actions {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.back-btn {
+    max-width: 220px;
+    width: 100%;
+}

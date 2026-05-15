@@ -219,6 +219,59 @@ def event_details(event_id):
 
     return render_template("event_details.html", user=user, event=event)
 
+@app.route("/events/delete")
+def delete_events_page():
+    username = get_current_username()
+
+    if not username:
+        return redirect(url_for("acc_login"))
+
+    user = db.find_user(username)
+
+    if user.account_type == "Admin":
+        events = db.list_all_events()
+    elif user.account_type == "Organizer":
+        events = db.list_events_by_organization(user.organization_name)
+    else:
+        flash("You are not authorized to delete events.")
+        return redirect(url_for("volunteer_home"))
+
+    return render_template("delete_event.html", user=user, events=events)
+
+@app.route("/events/delete/<int:event_id>", methods=["POST"])
+def delete_event_route(event_id):
+    username = get_current_username()
+
+    if not username:
+        return redirect(url_for("acc_login"))
+
+    user = db.find_user(username)
+    event = db.find_event_by_id(event_id)
+
+    if not event:
+        flash("Event not found.")
+        return redirect(url_for("delete_events_page"))
+
+    if user.account_type == "Admin":
+        allowed = True
+    elif user.account_type == "Organizer":
+        allowed = (event.organization_name == user.organization_name)
+    else:
+        allowed = False
+
+    if not allowed:
+        flash("You are not authorized to delete this event.")
+        return redirect(url_for("delete_events_page"))
+
+    success = db.delete_event(event_id)
+
+    if success:
+        flash("Event deleted successfully.")
+    else:
+        flash("Failed to delete event.")
+
+    return redirect(url_for("delete_events_page"))
+
 @app.route("/acc_login", methods=["GET", "POST"])
 def acc_login():
     if request.method == "POST":

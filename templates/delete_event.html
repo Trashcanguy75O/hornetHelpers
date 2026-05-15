@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="landing-page new-event-page">
+        <a href="{% if user.account_type == 'Admin' %}{{ url_for('admin_home') }}{% elif user.account_type == 'Organizer' %}{{ url_for('organizer_home') }}{% else %}{{ url_for('volunteer_home') }}{% endif %}">
+            <div class="event-logo"></div>
+        </a>
+
+        <h1>Delete Event</h1>
+
+        <div class="delete-event-actions">
+            <a href="{{ url_for('dashboard') }}" class="action-btn back-btn">Back</a>
+        </div>
+
+        {% if events %}
+            <div class="delete-event-list">
+                {% for event in events %}
+                    <div class="delete-event-card">
+                        <div class="delete-event-info">
+                            <h3>{{ event.title }}</h3>
+                            <p><strong>Location:</strong> {{ event.location }}</p>
+                            <p><strong>Start:</strong> {{ event.start_datetime }}</p>
+                            <p><strong>End:</strong> {{ event.end_datetime }}</p>
+                            {% if event.organization_name %}
+                                <p><strong>Organization:</strong> {{ event.organization_name }}</p>
+                            {% endif %}
+                        </div>
+
+                        <form method="post" action="{{ url_for('delete_event_route', event_id=event.id) }}">
+                            <button type="submit" class="action-btn delete-btn">Delete</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No events available to delete.</p>
+        {% endif %}
+    </div>
+{% endblock %}
