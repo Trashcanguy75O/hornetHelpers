@@ -11,9 +11,11 @@
     <div class="figma-shell">
         <aside class="figma-sidebar">
             <div class="sidebar-logo-wrap">
-                <div class="sidebar-logo-circle">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hornet Helpers logo">
-                </div>
+                <a href="{{ url_for('acc_login') }}" style="display:block;">
+                    <div class="sidebar-logo-circle">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Hornet Helpers logo">
+                    </div>
+                </a>
             </div>
 
             <nav class="figma-sidebar-nav">
