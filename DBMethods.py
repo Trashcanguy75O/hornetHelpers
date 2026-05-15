@@ -805,3 +805,35 @@ class Database:
             )
             return [Event(*row) for row in cursor.fetchall()]
 
+            return [Event(*row) for row in rows]
+
+    # =====================================================
+    # FIND EVENT BY ID
+    # =====================================================
+    def find_event_by_id(self, event_id: int) -> Optional[Event]:
+
+        with self._connect() as conn:
+
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT
+                    id,
+                    title,
+                    description,
+                    location,
+                    start_datetime,
+                    end_datetime,
+                    created_by_username,
+                    created_by_account_type,
+                    organization_name
+                FROM events
+                WHERE id = ?
+            """, (event_id,))
+
+            row = cursor.fetchone()
+
+            if row:
+                return Event(*row)
+
+            return None
