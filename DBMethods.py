@@ -837,3 +837,20 @@ class Database:
                 return Event(*row)
 
             return None
+
+    def list_user_events_by_month(self, username, year, month) -> List[Event]:
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, title, description, location, start_datetime, end_datetime, 
+                       created_by_username, created_by_account_type, organization_name
+                FROM events
+                WHERE created_by_username = ? 
+                  AND strftime('%Y', start_datetime) = ? 
+                  AND strftime('%m', start_datetime) = ?
+                ORDER BY start_datetime ASC
+                """,
+                (username, str(year), f"{month:02d}"),
+            )
+            return [Event(*row) for row in cursor.fetchall()]
