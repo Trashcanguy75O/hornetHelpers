@@ -131,6 +131,7 @@ body {
     width: 100%;
     min-height: calc(100vh - 145px);
     background: #003b2f;
+    position: relative;
 }
 
 .profile-hero {
@@ -667,6 +668,24 @@ body {
     flex-direction: column;
     gap: 28px;
     align-items: center;
+}
+
+.event-back-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: inline-block;
+    padding: 6px 14px;
+    background: #ffffff;
+    color: #333333;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.event-back-btn:hover {
+    background: #e8e8e8;
 }
 
 .event-details-title {

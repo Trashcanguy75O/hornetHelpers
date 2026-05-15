@@ -204,8 +204,8 @@ def event_details(event_id):
     if not username:
         return redirect(url_for("acc_login"))
 
-    user = user_repo.find_user(username)
-    event = event_repo.find_event_by_id(event_id)
+    user = db.find_user(username)
+    event = db.find_event_by_id(event_id)
 
     if not event:
         flash("Event not found.")
@@ -619,14 +619,6 @@ def update_account():
         message=message,
         success=success
     )
-
-@app.route("/events/<int:event_id>")
-def event_detail(event_id):
-    event = db.find_event_by_id(event_id)
-    if not event:
-        flash("Event not found.")
-        return redirect(url_for("event_calendar"))
-    return render_template("event_detail.html", event=event)
 
 
 @app.route("/eventCalendar")
