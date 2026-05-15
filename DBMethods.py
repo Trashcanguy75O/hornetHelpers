@@ -72,9 +72,21 @@ class Event:
 
 
 class Database:
-    def __init__(self, database_path: str):
-        self.database_path = database_path
+    _instance = None
+    _initialized = False
 
+    def __new__(cls, database_path: str):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, database_path: str):
+        # Prevent reinitialization
+        if self.__class__._initialized:
+            return
+
+        self.database_path = database_path
+        self.__class__._initialized = True
     def _connect(self):
         conn = sqlite3.connect(self.database_path)
         conn.execute("PRAGMA foreign_keys = ON")
