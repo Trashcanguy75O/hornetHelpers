@@ -642,6 +642,25 @@ class Database:
             )
             return [Event(*row) for row in cursor.fetchall()]
 
+    def list_events_by_month(self, year, month) -> List[Event]:
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, title, description, location,
+                       start_datetime, end_datetime,
+                       created_by_username,
+                       created_by_account_type,
+                       organization_name
+                FROM events
+                WHERE strftime('%Y', start_datetime) = ?
+                  AND strftime('%m', start_datetime) = ?
+                ORDER BY start_datetime ASC
+                """,
+                (str(year), f"{month:02d}"),
+            )
+            return [Event(*row) for row in cursor.fetchall()]
+
     def find_event_by_id(self, event_id) -> Optional[Event]:
         with self._connect() as conn:
             cursor = conn.cursor()

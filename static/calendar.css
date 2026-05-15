@@ -1,0 +1,65 @@
+
+.figma-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-footer-strip {
+  display: none;
+}
+
+.calendar {
+  flex: 1;
+  padding: 16px;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-left: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+}
+
+.cal-day-name, .cal-day {
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  padding: 5px;
+  min-height: 100px;
+}
+
+.cal-day-name {
+  min-height: unset;
+  text-align: center;
+  font-weight: bold;
+  background-color: rgba(0,0,0,0.1);
+}
+
+.cal-day.empty {
+  background-color: rgba(0,0,0,0.05);
+}
+
+.cal-day.today {
+  background-color: rgba(0,100,0,0.15);
+  font-weight: bold;
+}
+
+.cal-event {
+  font-size: 11px;
+  background-color: rgba(0,100,0,0.2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}

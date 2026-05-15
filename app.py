@@ -22,6 +22,7 @@ app.secret_key = SECRET_KEY
 # =====================================================
 
 db = Database("hornethelpers.db")
+db.initialize()
 
 UPLOAD_FOLDER = Path("static/uploads/profile_photos")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
@@ -598,10 +599,27 @@ def update_account():
         success=success
     )
 
+@app.route("/events/<int:event_id>")
+def event_detail(event_id):
+    event = db.find_event_by_id(event_id)
+    if not event:
+        flash("Event not found.")
+        return redirect(url_for("event_calendar"))
+    return render_template("event_detail.html", event=event)
+
+
+@app.route("/eventCalendar")
+def event_calendar():
+    from eventCalendar import get_calendar_data
+    today = datetime.today()
+    year = request.args.get("year", today.year, type=int)
+    month = request.args.get("month", today.month, type=int)
+
+    data = get_calendar_data(year, month, db)
+
+    return render_template("eventCalendar.html", today=today, **data)
 
 if __name__ == "__main__":
-    db.initialize()
-
     if (
         not SECRET_KEY
         or not ADMIN_REGISTRATION_PIN
