@@ -766,3 +766,22 @@ class Database:
                 (username,),
             )
             return [Event(*row) for row in cursor.fetchall()]
+
+    def list_user_signed_up_events_by_month(self, username, year, month) -> List[Event]:
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT e.id, e.title, e.description, e.location, e.start_datetime, e.end_datetime, 
+                       e.created_by_username, e.created_by_account_type, e.organization_name
+                FROM events e
+                INNER JOIN event_signups es ON e.id = es.event_id
+                WHERE es.username = ? 
+                  AND strftime('%Y', e.start_datetime) = ? 
+                  AND strftime('%m', e.start_datetime) = ?
+                ORDER BY e.start_datetime ASC
+                """,
+                (username, str(year), f"{month:02d}"),
+            )
+            return [Event(*row) for row in cursor.fetchall()]
+

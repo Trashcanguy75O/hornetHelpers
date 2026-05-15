@@ -619,6 +619,23 @@ def event_calendar():
 
     return render_template("eventCalendar.html", today=today, **data)
 
+
+@app.route("/personal_calendar")
+def personal_calendar():
+    from personalCalendar import get_personal_calendar_data
+    username = get_current_username()
+
+    if not username:
+        return redirect(url_for("acc_login"))
+
+    today = datetime.today()
+    year = request.args.get("year", today.year, type=int)
+    month = request.args.get("month", today.month, type=int)
+
+    data = get_personal_calendar_data(year, month, db, username)
+
+    return render_template("personal_calendar.html", today=today, **data)
+
 if __name__ == "__main__":
     if (
         not SECRET_KEY

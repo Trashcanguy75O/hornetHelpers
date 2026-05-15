@@ -1,0 +1,48 @@
+{% extends "app_base.html" %}
+
+{% block title %}Personal Calendar - Hornet Helpers{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="calendar">
+  <div class="cal-nav">
+    <a href="{{ url_for('personal_calendar', year=prev_year, month=prev_month) }}"><button>&lt;</button></a>
+    <h2>{{ month_name }} {{ year }}</h2>
+    <a href="{{ url_for('personal_calendar', year=next_year, month=next_month) }}"><button>&gt;</button></a>
+  </div>
+  <div class="cal-grid">
+    <div class="cal-day-name">Sun</div>
+    <div class="cal-day-name">Mon</div>
+    <div class="cal-day-name">Tue</div>
+    <div class="cal-day-name">Wed</div>
+    <div class="cal-day-name">Thu</div>
+    <div class="cal-day-name">Fri</div>
+    <div class="cal-day-name">Sat</div>
+
+    {% for week in weeks %}
+      {% for day in week %}
+        {% if day == 0 %}
+          <div class="cal-day empty"></div>
+        {% elif day == today.day and month == today.month and year == today.year %}
+          <div class="cal-day today">
+            {{ day }}
+            {% for event in events_by_day.get(day, []) %}
+              <a class="cal-event" href="{{ url_for('event_detail', event_id=event.id) }}">{{ event.title }}</a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="cal-day">
+            {{ day }}
+            {% for event in events_by_day.get(day, []) %}
+              <a class="cal-event" href="{{ url_for('event_detail', event_id=event.id) }}">{{ event.title }}</a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
