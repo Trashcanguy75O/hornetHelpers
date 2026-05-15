@@ -76,7 +76,9 @@ class Database:
         self.database_path = database_path
 
     def _connect(self):
-        return sqlite3.connect(self.database_path)
+        conn = sqlite3.connect(self.database_path)
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
 
     # =====================================================
     # VALIDATION (USER)
