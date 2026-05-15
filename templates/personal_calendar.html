@@ -30,14 +30,14 @@
           <div class="cal-day today">
             {{ day }}
             {% for event in events_by_day.get(day, []) %}
-              <a class="cal-event" href="{{ url_for('event_detail', event_id=event.id) }}">{{ event.title }}</a>
+              <a class="cal-event" href="{{ url_for('event_details', event_id=event.id) }}">{{ event.title }}</a>
             {% endfor %}
           </div>
         {% else %}
           <div class="cal-day">
             {{ day }}
             {% for event in events_by_day.get(day, []) %}
-              <a class="cal-event" href="{{ url_for('event_detail', event_id=event.id) }}">{{ event.title }}</a>
+              <a class="cal-event" href="{{ url_for('event_details', event_id=event.id) }}">{{ event.title }}</a>
             {% endfor %}
           </div>
         {% endif %}
