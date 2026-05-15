@@ -743,3 +743,22 @@ body {
 .full-width {
     grid-column: 1 / -1;
 }
+
+.event-detail-btn {
+    width: 100%;
+    min-height: 72px;
+    border-radius: 18px;
+    background: #f3f3f3;
+    color: #111111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 22px;
+    padding: 16px 18px;
+    line-height: 1.35;
+}
+
+.event-detail-value-btn:hover {
+    background-color: #e8e8e8;
+}

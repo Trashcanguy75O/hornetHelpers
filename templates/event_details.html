@@ -42,6 +42,13 @@
                     <div class="event-detail-value">{{ event.end_datetime }}</div>
                 </div>
 
+                <div class="event-detail-card">
+                    <label>Join/Leave Event</label>
+                    <button type="button" class="event-detail-btn">
+                        {{ event.end_datetime }}
+                    </button>
+                </div>
+
                 {% if event.organization_name %}
                 <div class="event-detail-card full-width">
                     <label>Organization</label>
